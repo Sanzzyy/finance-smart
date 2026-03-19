@@ -134,8 +134,12 @@ const Dashboard = () => {
   const fetchSemuaData = async (userId) => {
     try {
       const [resPeng, resPem] = await Promise.all([
-        axios.get(`http://localhost:5000/api/pengeluaran/${userId}`),
-        axios.get(`http://localhost:5000/api/pemasukan/${userId}`),
+        axios.get(
+          `https://finance-smart-nine.vercel.app/api/pengeluaran/${userId}`,
+        ),
+        axios.get(
+          `https://finance-smart-nine.vercel.app/api/pemasukan/${userId}`,
+        ),
       ]);
       const dataPeng = resPeng.data.data.map((i) => ({
         ...i,
@@ -202,7 +206,7 @@ const Dashboard = () => {
     try {
       setIsScanning(true);
       const response = await axios.post(
-        "http://localhost:5000/api/scan",
+        "https://finance-smart-nine.vercel.app/api/scan",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -222,7 +226,7 @@ const Dashboard = () => {
   const handleSimpanPemasukan = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/pemasukan", {
+      await axios.post("https://finance-smart-nine.vercel.app/api/pemasukan", {
         userId: userData.id,
         sumber: formPemasukan.sumber,
         jumlah: parseInt(formPemasukan.jumlah.replace(/\./g, "")),
@@ -241,13 +245,16 @@ const Dashboard = () => {
   const handleSimpanPengeluaranManual = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/pengeluaran", {
-        userId: userData.id,
-        toko: formPengeluaran.toko,
-        total: parseInt(formPengeluaran.total.replace(/\./g, "")),
-        kategori: formPengeluaran.kategori,
-        items: [], // Kosongkan karena ini input manual, bukan dari struk
-      });
+      await axios.post(
+        "https://finance-smart-nine.vercel.app/api/pengeluaran",
+        {
+          userId: userData.id,
+          toko: formPengeluaran.toko,
+          total: parseInt(formPengeluaran.total.replace(/\./g, "")),
+          kategori: formPengeluaran.kategori,
+          items: [], // Kosongkan karena ini input manual, bukan dari struk
+        },
+      );
       alert("Sip! Pengeluaran berhasil dicatat.");
       setShowPengeluaranModal(false);
       setFormPengeluaran({ toko: "", total: "", kategori: "Makan" });
@@ -270,7 +277,10 @@ const Dashboard = () => {
         items: scannedData.items || [],
       };
 
-      await axios.post("http://localhost:5000/api/pengeluaran", payload);
+      await axios.post(
+        "https://finance-smart-nine.vercel.app/api/pengeluaran",
+        payload,
+      );
 
       alert("Sip! Pengeluaran dari struk berhasil dicatat.");
       setScannedData(null);
@@ -298,10 +308,13 @@ const Dashboard = () => {
       setIsListening(false);
       setIsScanning(true);
       try {
-        const res = await axios.post("http://localhost:5000/api/voice", {
-          userId: userData.id,
-          text: transcript,
-        });
+        const res = await axios.post(
+          "https://finance-smart-nine.vercel.app/api/voice",
+          {
+            userId: userData.id,
+            text: transcript,
+          },
+        );
         alert(`Sip! ${res.data.tercatat.judul} berhasil dicatat!`);
         fetchSemuaData(userData.id);
       } catch (e) {
@@ -323,7 +336,9 @@ const Dashboard = () => {
       // Tentukan endpoint berdasarkan tipe
       const endpoint = tipe === "pemasukan" ? "pemasukan" : "pengeluaran";
 
-      await axios.delete(`http://localhost:5000/api/${endpoint}/${id}`);
+      await axios.delete(
+        `https://finance-smart-nine.vercel.app/api/${endpoint}/${id}`,
+      );
 
       alert("Transaksi berhasil dihapus!");
       // Panggil fetchSemuaData agar saldo dan list langsung update
@@ -351,7 +366,7 @@ const Dashboard = () => {
           : { toko: formEdit.judul, total: angkaBersih };
 
       await axios.put(
-        `http://localhost:5000/api/${endpoint}/${formEdit.id}`,
+        `https://finance-smart-nine.vercel.app/api/${endpoint}/${formEdit.id}`,
         payload,
       );
 
