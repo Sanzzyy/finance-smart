@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+ id                String        @id @default(uuid())
+  namaLengkap       String
+  email             String        @unique
+  password          String
+  isBiometricActive Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  // Tambahkan relasi ini: Satu user bisa punya banyak pengeluaran
+  pemasukan         Pemasukan[]
+  pengeluaran       Pengeluaran[]
+}
+
+model Pemasukan {
+  id        String   @id @default(uuid())
+  sumber    String   // Misalnya: "Gaji", "Uang Jajan", "Project Web"
+  jumlah    Int
+  kategori  String   @default("Lainnya")
+  tanggal   DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Pengeluaran {
+  id        String   @id @default(uuid())
+  toko      String
+  total     Int
+  kategori  String   @default("Lainnya")
+  items     String   // Kita simpan detail barang sebagai teks (JSON stringified)
+  tanggal   DateTime @default(now())
+  userId    String   // ID dari user yang melakukan pengeluaran
+  user      User     @relation(fields: [userId], references: [id])
+}

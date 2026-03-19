@@ -1,0 +1,429 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import multer from "multer";
+import axios from "axios";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from "@prisma/client";
+
+// Setup adapter native Postgres
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+const app = express();
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+const PORT = 5000;
+
+// Setup Multer untuk menyimpan gambar sementara di memory (RAM) server
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Inisialisasi Gemini
+const genAI = new GoogleGenerativeAI(process.env.OPENROUTER_API_KEY);
+
+app.get("/", (req, res) => {
+  res.send("Server API ManagementSmart Berjalan Lancar! 🚀");
+});
+
+const JWT_SECRET = "syzen";
+
+// 1. RUTE REGISTER (Daftar Akun Baru)
+app.post("/api/register", async (req, res) => {
+  try {
+    const { namaLengkap, email, password } = req.body;
+
+    // Cek apakah email sudah terdaftar
+    const userExists = await prisma.user.findUnique({ where: { email } });
+    if (userExists) {
+      return res.status(400).json({ message: "Email sudah digunakan!" });
+    }
+
+    // Acak/Hash password (Bcrypt)
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Simpan user baru ke database
+    const newUser = await prisma.user.create({
+      data: {
+        namaLengkap,
+        email,
+        password: hashedPassword, // Simpan password yang sudah diacak
+      },
+    });
+
+    res.status(201).json({ message: "Registrasi berhasil!", data: newUser });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ message: "Terjadi kesalahan di server." });
+  }
+});
+
+// 2. RUTE LOGIN (Masuk Akun)
+app.post("/api/login", async (req, res) => {
+  try {
+    console.log("Data yang masuk ke Login:", req.body);
+
+    // 1. Tangkap 'identifier' juga dari req.body
+    const { email, identifier, password } = req.body;
+
+    // 2. Gabungkan logika: Kalau 'email' kosong, pakai 'identifier'
+    const emailYangMasuk = email || identifier;
+
+    // 3. Ubah satpamnya untuk mengecek 'emailYangMasuk'
+    if (!emailYangMasuk || !password) {
+      return res
+        .status(400)
+        .json({ message: "Ups! Email dan Password wajib diisi." });
+    }
+
+    // 4. Cari user di database menggunakan 'emailYangMasuk'
+    const user = await prisma.user.findUnique({
+      where: { email: emailYangMasuk },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Email tidak ditemukan!" });
+    }
+
+    // Cocokkan password yang diketik dengan yang ada di database
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Password salah!" });
+    }
+
+    // Buat Tiket Masuk (Token JWT)
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "7d", // Token berlaku 7 hari
+    });
+
+    // Kirim token dan data user (kecuali password) ke frontend
+    res.status(200).json({
+      message: "Login sukses!",
+      token,
+      user: {
+        id: user.id,
+        namaLengkap: user.namaLengkap,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Terjadi kesalahan di server." });
+  }
+});
+
+// upload.single('receipt') artinya kita menerima 1 file gambar dengan nama field 'receipt'
+// --- ENDPOINT: SCAN STRUK DENGAN GEMINI ---
+app.post("/api/scan", upload.single("receipt"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "Gambarnya mana?" });
+
+    const base64Image = req.file.buffer.toString("base64");
+    const mimeType = req.file.mimetype;
+
+    const daftarKategori =
+      "Makan, Transportasi, Belanja, Hiburan, Tagihan, Kesehatan, Pendidikan, Jajan, Gaji, Bonus, Darurat, Lainnya";
+
+    const prompt = `
+      Kamu adalah kasir pintar. Ekstrak data dari struk ini secara mendetail.
+      PENTING: List semua barang yang dibeli.
+      Kembalikan hanya dalam format JSON:
+      {
+        "toko": "nama toko",
+        "total": 100000,
+        "kategori": "Belanja/Makan/dll",
+        "items": [
+          { "nama": "Nama Barang 1", "harga": 50000 },
+          { "nama": "Nama Barang 2", "harga": 50000 }
+        ]
+      }
+    `;
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:5173", // Wajib ada untuk OpenRouter
+          "X-Title": "Finance Smart", // Wajib ada untuk OpenRouter
+        },
+        body: JSON.stringify({
+          model: "google/gemma-3-27b-it",
+          max_tokens: 1000,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:${mimeType};base64,${base64Image}` },
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    );
+
+    const dataAI = await response.json();
+
+    // TANGKAP ERROR DARI OPENROUTER
+    if (dataAI.error) {
+      console.error("OpenRouter Error (Scan):", dataAI.error);
+      return res
+        .status(500)
+        .json({ message: `OpenRouter menolak: ${dataAI.error.message}` });
+    }
+
+    const responseText = dataAI.choices[0].message.content;
+
+    const cleanJson = responseText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    const data = JSON.parse(cleanJson);
+
+    res.status(200).json({ data: data });
+  } catch (error) {
+    console.error("Error scan:", error);
+    res.status(500).json({ message: "Gagal membaca struk." });
+  }
+});
+
+// --- ENDPOINT: SIMPAN PENGELUARAN ---
+app.post("/api/pengeluaran", async (req, res) => {
+  try {
+    const { userId, toko, total, items, kategori } = req.body;
+
+    const pengeluaranBaru = await prisma.pengeluaran.create({
+      data: {
+        userId: userId,
+        toko: toko || "Toko Tidak Diketahui",
+        total: total || 0,
+        items: typeof items === "string" ? items : JSON.stringify(items || []),
+        kategori: kategori ? kategori.trim() : "Lainnya",
+      },
+    });
+
+    res
+      .status(201)
+      .json({ message: "Data berhasil disimpan!", data: pengeluaranBaru });
+  } catch (error) {
+    console.error("Error simpan data:", error);
+    res.status(500).json({ message: "Gagal menyimpan pengeluaran." });
+  }
+});
+
+// --- ENDPOINT: AMBIL DATA PENGELUARAN BERDASARKAN USER ---
+app.get("/api/pengeluaran/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Cari semua pengeluaran milik user ini, urutkan dari yang terbaru
+    const riwayatPengeluaran = await prisma.pengeluaran.findMany({
+      where: { userId: userId },
+      orderBy: { tanggal: "desc" },
+    });
+
+    res.status(200).json({ data: riwayatPengeluaran });
+  } catch (error) {
+    console.error("Error ambil data:", error);
+    res.status(500).json({ message: "Gagal mengambil data pengeluaran." });
+  }
+});
+
+// --- ENDPOINT: SIMPAN PEMASUKAN ---
+app.post("/api/pemasukan", async (req, res) => {
+  try {
+    const { userId, sumber, jumlah, kategori } = req.body;
+    const pemasukanBaru = await prisma.pemasukan.create({
+      data: {
+        userId: userId,
+        sumber: sumber || "Pemasukan",
+        jumlah: parseInt(jumlah) || 0, // Pastikan jadi angka
+        kategori: kategori ? kategori.trim() : "Lainnya",
+      },
+    });
+    res
+      .status(201)
+      .json({ message: "Pemasukan dicatat!", data: pemasukanBaru });
+  } catch (error) {
+    console.error("Error simpan pemasukan:", error);
+    res.status(500).json({ message: "Gagal menyimpan pemasukan." });
+  }
+});
+
+// --- ENDPOINT: AMBIL DATA PEMASUKAN ---
+app.get("/api/pemasukan/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const riwayatPemasukan = await prisma.pemasukan.findMany({
+      where: { userId: userId },
+    });
+    res.status(200).json({ data: riwayatPemasukan });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal mengambil data pemasukan." });
+  }
+});
+
+// --- ENDPOINT: HAPUS PEMASUKAN ---
+app.delete("/api/pemasukan/:id", async (req, res) => {
+  try {
+    await prisma.pemasukan.delete({ where: { id: req.params.id } });
+    res.status(200).json({ message: "Pemasukan berhasil dihapus!" });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal menghapus data." });
+  }
+});
+
+// --- ENDPOINT: HAPUS PENGELUARAN ---
+app.delete("/api/pengeluaran/:id", async (req, res) => {
+  try {
+    await prisma.pengeluaran.delete({ where: { id: req.params.id } });
+    res.status(200).json({ message: "Pengeluaran berhasil dihapus!" });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal menghapus data." });
+  }
+});
+
+// --- ENDPOINT: UBAH PEMASUKAN ---
+app.put("/api/pemasukan/:id", async (req, res) => {
+  try {
+    const { sumber, jumlah, kategori } = req.body;
+    await prisma.pemasukan.update({
+      where: { id: req.params.id },
+      data: {
+        sumber: sumber,
+        jumlah: parseInt(jumlah),
+        ...(kategori && { kategori: kategori }),
+      },
+    });
+    res.status(200).json({ message: "Pemasukan berhasil diubah!" });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal mengubah data pemasukan." });
+  }
+});
+
+// --- ENDPOINT: UBAH PENGELUARAN ---
+app.put("/api/pengeluaran/:id", async (req, res) => {
+  try {
+    const { toko, total, kategori } = req.body;
+    await prisma.pengeluaran.update({
+      where: { id: req.params.id },
+      data: {
+        toko: toko,
+        total: parseInt(total),
+        ...(kategori && { kategori: kategori }),
+      },
+    });
+    res.status(200).json({ message: "Pengeluaran berhasil diubah!" });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal mengubah data pengeluaran." });
+  }
+});
+
+// --- ENDPOINT: VOICE COMMAND DENGAN GEMINI ---
+app.post("/api/voice", async (req, res) => {
+  try {
+    const { userId, text } = req.body;
+    const daftarKategori =
+      "Makan, Transportasi, Belanja, Hiburan, Tagihan, Kesehatan, Pendidikan, Jajan, Gaji, Bonus, Darurat, Lainnya";
+
+    const prompt = `
+      Ekstrak data keuangan dari teks ini: "${text}"
+      Daftar kategori yang boleh digunakan: ${daftarKategori}
+      
+      Tugas:
+      1. Tentukan 'tipe' ("pemasukan" atau "pengeluaran").
+      2. Tentukan 'judul' (nama barang/sumber).
+      3. Tentukan 'nominal' (angka murni).
+      
+     Kembalikan hanya dalam format JSON:
+      {
+        "judul": "nama transaksi",
+        "nominal": 10000,
+        "tipe": "pemasukan/pengeluaran",
+        "kategori": "Pilih salah satu dari daftar kategori di atas"
+      }
+    `;
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:5173",
+          "X-Title": "Finance Smart",
+        },
+        body: JSON.stringify({
+          model: "google/gemma-3-27b-it",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      },
+    );
+
+    const dataAI = await response.json();
+
+    if (dataAI.error) {
+      console.error("OpenRouter Error (Voice):", dataAI.error);
+      return res.status(500).json({ message: "OpenRouter Error" });
+    }
+
+    const responseText = dataAI.choices[0].message.content;
+    const cleanJson = responseText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    const data = JSON.parse(cleanJson);
+
+    // Mencegah AI mengembalikan spasi berlebih atau string kotor
+    const kategoriBersih = data.kategori ? data.kategori.trim() : "Lainnya";
+
+    if (data.tipe === "pemasukan") {
+      await prisma.pemasukan.create({
+        data: {
+          userId: userId,
+          sumber: data.judul,
+          jumlah: data.nominal,
+          kategori: kategoriBersih,
+        },
+      });
+    } else {
+      await prisma.pengeluaran.create({
+        data: {
+          userId: userId,
+          toko: data.judul,
+          total: data.nominal,
+          kategori: kategoriBersih,
+          items: JSON.stringify([{ nama: data.judul, harga: data.nominal }]),
+        },
+      });
+    }
+
+    res.status(200).json({
+      message: "Berhasil dicatat!",
+      tercatat: data,
+    });
+  } catch (error) {
+    console.error("Error voice command:", error);
+    res.status(500).json({ message: "Gagal memproses suara." });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server Backend berjalan di http://localhost:${PORT}`);
+});
