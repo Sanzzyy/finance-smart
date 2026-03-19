@@ -7,8 +7,8 @@ import axios from "axios";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
 // Setup adapter native Postgres
@@ -424,6 +424,12 @@ app.post("/api/voice", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server Backend berjalan di http://localhost:${PORT}`);
-});
+// Kalau di laptop, pakai app.listen. Kalau di Vercel, di-export!
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server Backend berjalan di http://localhost:${PORT}`);
+  });
+}
+
+export default app;
