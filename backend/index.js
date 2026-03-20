@@ -93,7 +93,7 @@ app.post("/api/webauthn/register-options", async (req, res) => {
     const options = await generateRegistrationOptions({
       rpName,
       rpID,
-      userID: user.id,
+      userID: new Uint8Array(Buffer.from(user.id)),
       userName: user.email,
       // Mencegah HP mendaftarkan sidik jari yang sama 2 kali
       excludeCredentials: userPasskeys.map((key) => ({
