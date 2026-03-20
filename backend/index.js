@@ -278,10 +278,14 @@ app.post("/api/webauthn/login-options", async (req, res) => {
     // Buat opsi login
     const options = await generateAuthenticationOptions({
       rpID,
-      allowCredentials: userPasskeys.map((key) => ({
-        id: key.credentialID.toString("base64url"),
-        type: "public-key",
-      })),
+      allowCredentials: userPasskeys.map((key) => {
+        // KITA PAKSA JADI TEKS MURNI AGAR LIBRARY TIDAK BINGUNG!
+        const idString = Buffer.from(key.credentialID).toString("base64url");
+        return {
+          id: idString,
+          type: "public-key",
+        };
+      }),
       userVerification: "preferred",
     });
 
@@ -324,8 +328,10 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       expectedOrigin: origin,
       expectedRPID: rpID,
       authenticator: {
-        credentialPublicKey: passkey.credentialPK,
-        credentialID: passkey.credentialID.toString("base64url"),
+        // WUJUD BINER MURNI UNTUK PUBLIC KEY:
+        credentialPublicKey: new Uint8Array(Buffer.from(passkey.credentialPK)),
+        // WUJUD TEKS MURNI UNTUK ID:
+        credentialID: Buffer.from(passkey.credentialID).toString("base64url"),
         counter: Number(passkey.counter),
       },
     });
