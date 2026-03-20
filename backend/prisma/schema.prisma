@@ -21,7 +21,21 @@ model User {
   // Tambahkan relasi ini: Satu user bisa punya banyak pengeluaran
   pemasukan         Pemasukan[]
   pengeluaran       Pengeluaran[]
+  passkey           Passkey[]
 }
+
+// Buat model baru ini di bawah model User:
+model Passkey {
+  id              String   @id @default(uuid())
+  credentialID    Bytes    @unique // ID Gembok
+  credentialPK    Bytes            // Wujud asli Gembok (Public Key)
+  counter         BigInt           // Penghitung keamanan anti-hacker
+  transports      String?          // Info apakah pakai NFC, Bluetooth, atau Internal
+  
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 
 model Pemasukan {
   id        String   @id @default(uuid())

@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { Sparkles, ArrowRight } from "lucide-react"; // Ikon Coffee diganti jadi Sparkles
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { startRegistration } from "@simplewebauthn/browser";
 
 const Login = () => {
   const formRef = useRef(null);
@@ -38,7 +39,42 @@ const Login = () => {
           "Ingin mengaktifkan Sidik Jari/Face ID untuk login berikutnya?",
         );
         if (setujuiBiometric) {
-          localStorage.setItem("biometric_active", "true");
+          try {
+            // 1. Minta "Kode Tantangan" (Challenge) dari Backend
+            const optionsResp = await axios.post(
+              "http://localhost:5000/api/webauthn/register-options",
+              { email: formData.identifier }, // Kirim email user yang baru login
+            );
+            const options = optionsResp.data;
+
+            // 2. MUNCULKAN POP-UP SIDIK JARI BAWAAN SISTEM! 🪄
+            // Di sini layar akan meredup dan meminta scan jari/wajah
+            const attResp = await startRegistration(options);
+
+            // 3. Kalau scan berhasil, kirim "Gembok" (Public Key) ke Backend
+            const verifyResp = await axios.post(
+              "http://localhost:5000/api/webauthn/register-verify",
+              {
+                email: formData.identifier,
+                data: attResp,
+              },
+            );
+
+            // 4. Kalau Backend bilang cocok, simpan statusnya
+            if (verifyResp.data.verified) {
+              alert("Yeay! Sidik Jari berhasil diamankan! 🎉");
+              localStorage.setItem("biometric_active", "true");
+            }
+          } catch (error) {
+            console.error("Gagal setup biometrik:", error);
+            if (error.name === "NotAllowedError") {
+              alert("Pendaftaran sidik jari dibatalkan oleh user.");
+            } else {
+              alert(
+                "Gagal mendaftarkan sidik jari. Pastikan perangkatmu mendukung WebAuthn.",
+              );
+            }
+          }
         }
       }
 

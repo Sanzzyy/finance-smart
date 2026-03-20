@@ -11,10 +11,23 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+} from "@simplewebauthn/server";
+
 // Setup adapter native Postgres
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+
+// Konfigurasi WebAuthn
+const rpName = "FinanceSmart";
+const rpID = "localhost"; // Saat rilis ke Vercel nanti, ini harus diganti jadi domain Vercel-mu
+const origin = `http://${rpID}:5173`;
+
+// Brankas sementara untuk menyimpan 'Kode Tantangan'
+const challengeStore = {};
 
 const app = express();
 // Middleware
@@ -30,7 +43,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(process.env.OPENROUTER_API_KEY);
 
 app.get("/", (req, res) => {
-  res.send("Server API ManagementSmart Berjalan Lancar! 🚀");
+  res.send("Server API FinanceSmart Berjalan Lancar! 🚀");
 });
 
 const JWT_SECRET = "syzen";
@@ -63,6 +76,91 @@ app.post("/api/register", async (req, res) => {
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "Terjadi kesalahan di server." });
+  }
+});
+
+// --- API 1: Meminta Tantangan Biometrik ---
+app.post("/api/webauthn/register-options", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user)
+      return res.status(404).json({ message: "User tidak ditemukan!" });
+
+    // Cek apakah user sudah punya passkey sebelumnya
+    const userPasskeys = await prisma.passkey.findMany({
+      where: { userId: user.id },
+    });
+
+    // Buat opsi gembok baru
+    const options = await generateRegistrationOptions({
+      rpName,
+      rpID,
+      userID: user.id,
+      userName: user.email,
+      // Mencegah HP mendaftarkan sidik jari yang sama 2 kali
+      excludeCredentials: userPasskeys.map((key) => ({
+        id: key.credentialID,
+        type: "public-key",
+      })),
+      authenticatorSelection: {
+        residentKey: "preferred",
+        userVerification: "preferred",
+        authenticatorAttachment: "platform", // Memaksa HP pakai sensor bawaan (Sidik Jari/FaceID)
+      },
+    });
+
+    // Simpan tantangannya ke brankas sementara kita
+    challengeStore[user.id] = options.challenge;
+
+    res.json(options);
+  } catch (error) {
+    console.error("Error Generate Options:", error);
+    res.status(500).json({ message: "Gagal membuat opsi biometrik" });
+  }
+});
+
+// --- API 2: Memverifikasi Hasil Scan Sidik Jari ---
+app.post("/api/webauthn/register-verify", async (req, res) => {
+  try {
+    const { email, data } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    // Ambil tantangan yang tadi kita simpan
+    const expectedChallenge = challengeStore[user.id];
+
+    // Cocokkan data dari Frontend dengan ekspektasi Backend
+    const verification = await verifyRegistrationResponse({
+      response: data,
+      expectedChallenge,
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+    });
+
+    if (verification.verified) {
+      const { registrationInfo } = verification;
+      const { credentialPublicKey, credentialID, counter } = registrationInfo;
+
+      // Simpan Gembok (Public Key) secara permanen di Database!
+      await prisma.passkey.create({
+        data: {
+          userId: user.id,
+          credentialID: Buffer.from(credentialID),
+          credentialPK: Buffer.from(credentialPublicKey),
+          counter: BigInt(counter),
+        },
+      });
+
+      // Hapus tantangan sementara karena sudah selesai
+      delete challengeStore[user.id];
+
+      res.json({ verified: true, message: "Sidik jari berhasil diamankan!" });
+    } else {
+      res.status(400).json({ verified: false, message: "Verifikasi gagal." });
+    }
+  } catch (error) {
+    console.error("Error Verify Registration:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
