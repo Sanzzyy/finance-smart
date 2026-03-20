@@ -259,7 +259,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // =========================================================
-// API 3: Meminta Tantangan untuk LOGIN Biometrik (GANTI TOTAL)
+// API 3: Meminta Tantangan untuk LOGIN Biometrik
 // =========================================================
 app.post("/api/webauthn/login-options", async (req, res) => {
   try {
@@ -274,16 +274,13 @@ app.post("/api/webauthn/login-options", async (req, res) => {
       return res.status(400).json({ message: "Belum ada sidik jari." });
     }
 
-    // MAP YANG SUPER AMAN DARI ERROR BUFFER/STRING:
-    const allowCredentials = userPasskeys.map((key) => {
-      // RAHASIANYA: Bungkus dengan Buffer.from() agar bisa di-translate ke base64url!
-      const idString = Buffer.from(key.credentialID).toString("base64url");
-      return { id: idString, type: "public-key" };
-    });
-
     const options = await generateAuthenticationOptions({
       rpID,
-      allowCredentials,
+      allowCredentials: userPasskeys.map((key) => ({
+        // BUNGKUS AMAN MENGHINDARI ERROR ANGKA KOMA:
+        id: Buffer.from(key.credentialID).toString("base64url"),
+        type: "public-key",
+      })),
       userVerification: "preferred",
     });
 
@@ -300,7 +297,7 @@ app.post("/api/webauthn/login-options", async (req, res) => {
 });
 
 // =========================================================
-// API 4: Verifikasi Sidik Jari untuk LOGIN (GANTI TOTAL)
+// API 4: Verifikasi Sidik Jari untuk LOGIN
 // =========================================================
 app.post("/api/webauthn/login-verify", async (req, res) => {
   try {
@@ -312,9 +309,7 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       where: { userId: user.id },
     });
 
-    // Pencarian gembok yang aman:
     const passkey = userPasskeys.find((pk) => {
-      // BUNGKUS DENGAN BUFFER.FROM() JUGA
       const dbId = Buffer.from(pk.credentialID).toString("base64url");
       return dbId === data.id;
     });
@@ -331,7 +326,6 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       expectedRPID: rpID,
       authenticator: {
         credentialPublicKey: new Uint8Array(passkey.credentialPK),
-        // DAN BUNGKUS DI SINI JUGA!
         credentialID: Buffer.from(passkey.credentialID).toString("base64url"),
         counter: Number(passkey.counter),
       },
