@@ -34,6 +34,7 @@ const Login = () => {
       );
 
       const userData = response.data.user;
+      const initialToken = response.data.token;
 
       if (userData.hasBiometric) {
         // ==========================================
@@ -60,8 +61,9 @@ const Login = () => {
 
           if (verifyResp.data.verified) {
             alert("Verifikasi Sidik Jari Sukses! Meluncur ke Dashboard 🚀");
-            // Arahkan ke dashboard
-            // navigate('/dashboard');
+            localStorage.setItem("token", verifyResp.data.token);
+            localStorage.setItem("user", JSON.stringify(verifyResp.data.user));
+            // navigate akan dijalankan di bawah
           }
         } catch (error) {
           console.error("Gagal verifikasi sidik jari:", error);
@@ -98,13 +100,15 @@ const Login = () => {
             alert("Pendaftaran sidik jari dilewati.");
           }
         }
-        // Setelah daftar (atau nolak daftar), tetap arahkan ke dashboard
-        // navigate('/dashboard');
+        
+        // Simpan data login biasa karena user tidak punya biometrik untuk step ini
+        localStorage.setItem("token", initialToken);
+        localStorage.setItem("user", JSON.stringify(userData));
       }
 
       navigate("/dashboard");
     } catch (error) {
-      if (error.response) {
+      if (error?.response) {
         alert(error.response.data.message);
       } else {
         alert("Waduh, servernya error atau belum nyala.");
