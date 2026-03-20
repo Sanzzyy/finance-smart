@@ -31,6 +31,7 @@ import {
   Menu,
   Wallet,
   Calendar,
+  ChevronDown,
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -435,7 +436,7 @@ const Dashboard = () => {
       {/* 3. KONTEN UTAMA */}
       {/* pt-20 di mobile untuk memberi jarak agar tidak tertutup header mobile */}
       <main className="flex-1 overflow-y-auto relative pt-24 lg:pt-0 custom-scrollbar">
-        <div className="p-6 lg:p-12 max-w-7xl mx-auto ">
+        <div className="p-4 sm:p-6 lg:p-12 max-w-7xl mx-auto ">
           {activeTab === "dashboard" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               {/* --- HEADER SAPAAN & TANGGAL --- */}
@@ -443,25 +444,43 @@ const Dashboard = () => {
                 {/* Bagian Kiri: Teks Sapaan */}
                 <div>
                   <h2 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                    Halo, {(userData?.namaLengkap || userData?.name || "User").split(" ")[0]}!
+                    Halo,{" "}
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                      {
+                        (
+                          userData?.namaLengkap ||
+                          userData?.name ||
+                          "User"
+                        ).split(" ")[0]
+                      }
+                    </span>
+                    !
                     <span className="hover:rotate-12 hover:scale-110 transition-transform origin-bottom-right cursor-default inline-block">
                       👋
                     </span>
                   </h2>
-                  <p className="text-slate-500 mt-2 font-medium flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
-                    {getGreeting()}, ini ringkasan keuanganmu.
+                  <p className="text-slate-500 mt-3 font-medium flex items-center gap-2.5 w-fit bg-white px-4 py-2 rounded-full border border-slate-200/60 shadow-sm">
+                    <span className="text-sm">
+                      {getGreeting()}, ini ringkasan keuanganmu.
+                    </span>
                   </p>
                 </div>
 
                 {/* Bagian Kanan: Filter Waktu & Badge Tanggal */}
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
                   {/* --- DROPDOWN FILTER WAKTU --- */}
-                  <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
+                  <div className="relative group w-full sm:w-auto">
+                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                      <ChevronDown
+                        size={18}
+                        className="text-slate-400 group-hover:text-blue-500 transition-colors"
+                        strokeWidth={3}
+                      />
+                    </div>
                     <select
                       value={filterWaktu}
                       onChange={(e) => setFilterWaktu(e.target.value)}
-                      className="bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-4"
+                      className="w-full sm:w-auto bg-white hover:bg-slate-50 px-5 py-3.5 pr-12 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all text-sm font-bold text-slate-700 outline-none cursor-pointer appearance-none"
                     >
                       <option value="hari_ini">Hari Ini</option>
                       <option value="minggu_ini">Minggu Ini</option>
@@ -470,16 +489,16 @@ const Dashboard = () => {
                     </select>
                   </div>
 
-                  {/* Badge Tanggal (Tetap seperti sebelumnya) */}
-                  <div className="hidden lg:flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm shrink-0 cursor-default">
-                    <div className="bg-blue-50 text-blue-600 p-2.5 rounded-xl">
+                  {/* Badge Tanggal */}
+                  <div className="hidden lg:flex items-center gap-4 bg-white px-5 py-3.5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-default group">
+                    <div className="bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 p-2.5 rounded-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 shadow-inner">
                       <Calendar size={20} strokeWidth={2.5} />
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">
+                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-0.5">
                         Hari Ini
                       </p>
-                      <p className="text-sm font-bold text-slate-700">
+                      <p className="text-sm font-bold text-slate-700 group-hover:text-blue-700 transition-colors">
                         {new Date().toLocaleDateString("id-ID", {
                           weekday: "long",
                           day: "numeric",

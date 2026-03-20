@@ -64,7 +64,7 @@ const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
 
   return (
     <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
-      <div className="dash-card bg-gradient-to-tr from-[#0a46b5] via-[#1a73e8] to-[#4285f4] p-8 lg:p-10 rounded-[2.5rem] shadow-2xl shadow-blue-500/30 text-white relative overflow-hidden flex flex-col justify-between min-h-[320px]">
+      <div className="dash-card bg-gradient-to-tr from-[#0a46b5] via-[#1a73e8] to-[#4285f4] p-6 sm:p-8 lg:p-10 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl shadow-blue-500/30 text-white relative overflow-hidden flex flex-col justify-between min-h-[280px] sm:min-h-[320px]">
         {/* Ornamen Latar Belakang */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl -mr-40 -mt-40 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-400/20 rounded-full blur-2xl -ml-20 -mb-20 pointer-events-none"></div>
@@ -79,7 +79,7 @@ const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
                   Total Saldo Aktif
                 </p>
               </div>
-              <h2 className="text-5xl lg:text-[5.5rem] font-black tracking-tighter drop-shadow-md">
+              <h2 className="text-4xl px-2 sm:text-5xl lg:text-[5.5rem] font-black tracking-tighter drop-shadow-md truncate">
                 Rp {saldo.toLocaleString("id-ID")}
               </h2>
             </div>
@@ -112,33 +112,33 @@ const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
           {/* --- BAGIAN BAWAH: Panel Pemasukan & Pengeluaran --- */}
           <div className="mt-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-1.5 flex items-center justify-between shadow-lg">
             {/* Sektor Pemasukan */}
-            <div className="flex-1 p-3 lg:px-6 flex items-center gap-4 group cursor-default">
-              <div className="bg-green-400/20 p-3.5 rounded-2xl text-green-300 group-hover:scale-110 group-hover:bg-green-400/30 transition-all duration-300">
-                <TrendingUp size={24} />
+            <div className="flex-1 p-2 sm:p-3 lg:px-6 flex items-center gap-2 sm:gap-4 group cursor-default min-w-0">
+              <div className="bg-green-400/20 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl text-green-300 group-hover:scale-110 group-hover:bg-green-400/30 transition-all duration-300 shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <p className="text-blue-100 text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-0.5 opacity-80">
+              <div className="min-w-0">
+                <p className="text-blue-100 text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-0.5 opacity-80 truncate">
                   Pemasukan
                 </p>
-                <p className="font-bold text-lg lg:text-2xl text-white truncate drop-shadow-sm">
+                <p className="font-bold text-sm sm:text-lg lg:text-2xl text-white truncate drop-shadow-sm">
                   Rp {totalPemasukan.toLocaleString("id-ID")}
                 </p>
               </div>
             </div>
 
             {/* Garis Pemisah Vertikal Halus */}
-            <div className="w-[1px] h-12 bg-white/20 rounded-full"></div>
+            <div className="w-[1px] h-10 sm:h-12 bg-white/20 rounded-full shrink-0"></div>
 
             {/* Sektor Pengeluaran */}
-            <div className="flex-1 p-3 lg:px-6 flex items-center gap-4 group cursor-default">
-              <div className="bg-red-400/20 p-3.5 rounded-2xl text-red-300 group-hover:scale-110 group-hover:bg-red-400/30 transition-all duration-300">
-                <TrendingDown size={24} />
+            <div className="flex-1 p-2 sm:p-3 lg:px-6 flex items-center gap-2 sm:gap-4 group cursor-default min-w-0">
+              <div className="bg-red-400/20 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl text-red-300 group-hover:scale-110 group-hover:bg-red-400/30 transition-all duration-300 shrink-0">
+                <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <p className="text-blue-100 text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-0.5 opacity-80">
+              <div className="min-w-0">
+                <p className="text-blue-100 text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-0.5 opacity-80 truncate">
                   Pengeluaran
                 </p>
-                <p className="font-bold text-lg lg:text-2xl text-white truncate drop-shadow-sm">
+                <p className="font-bold text-sm sm:text-lg lg:text-2xl text-white truncate drop-shadow-sm">
                   Rp {totalPengeluaran.toLocaleString("id-ID")}
                 </p>
               </div>

@@ -19,11 +19,11 @@ const TransactionList = ({
   onTambahPengeluaran,
 }) => {
   return (
-    <div className="dash-card bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+    <div className="dash-card bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-sm">
       {/* --- HEADER TRANSAKSI & TOMBOL MANUAL --- */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-5 border-b border-slate-50 pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4 sm:gap-5 border-b border-slate-50 pb-5 sm:pb-6">
         <div>
-          <h3 className="text-slate-800 font-black text-2xl tracking-tight">
+          <h3 className="text-slate-800 font-black text-xl sm:text-2xl tracking-tight">
             Riwayat Transaksi
           </h3>
           <p className="text-slate-400 text-sm mt-1 font-medium">
@@ -32,28 +32,26 @@ const TransactionList = ({
         </div>
 
         {/* Tombol Input Manual Contextual */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
           <button
             onClick={onTambahPemasukan}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white px-5 py-3 rounded-2xl font-bold transition-all duration-300 border border-emerald-100 hover:border-emerald-500 group shadow-sm"
+            className="flex-1 md:flex-none flex items-center justify-center gap-1 sm:gap-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold transition-all duration-300 border border-emerald-100 hover:border-emerald-500 group shadow-sm shrink-0 min-w-0"
           >
             <Plus
-              size={18}
+              className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-300 shrink-0"
               strokeWidth={3}
-              className="group-hover:rotate-90 transition-transform duration-300"
             />
-            Pemasukan
+            <span className="truncate">Pemasukan</span>
           </button>
           <button
             onClick={onTambahPengeluaran}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white px-5 py-3 rounded-2xl font-bold transition-all duration-300 border border-rose-100 hover:border-rose-500 group shadow-sm"
+            className="flex-1 md:flex-none flex items-center justify-center gap-1 sm:gap-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold transition-all duration-300 border border-rose-100 hover:border-rose-500 group shadow-sm shrink-0 min-w-0"
           >
             <Minus
-              size={18}
+              className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-rotate-90 transition-transform duration-300 shrink-0"
               strokeWidth={3}
-              className="group-hover:-rotate-90 transition-transform duration-300"
             />
-            Pengeluaran
+            <span className="truncate">Pengeluaran</span>
           </button>
         </div>
       </div>
@@ -72,15 +70,15 @@ const TransactionList = ({
               key={item.id}
               className="group flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors px-2 gap-3 sm:gap-0"
             >
-              <div className="flex items-start sm:items-center gap-3 sm:gap-5">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
                 <div
-                  className={`p-4 rounded-full shrink-0 ${item.tipe === "pemasukan" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
+                  className={`p-3 sm:p-4 rounded-full shrink-0 ${item.tipe === "pemasukan" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
                 >
                   {ikonKategori[item.kategori?.toLowerCase()] || (
-                    <HelpCircle size={20} />
+                    <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-bold text-[#1f2937] text-base capitalize">
                       {item.judul}
