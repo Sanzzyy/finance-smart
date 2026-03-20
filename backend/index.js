@@ -234,14 +234,22 @@ app.post("/api/login", async (req, res) => {
       expiresIn: "7d", // Token berlaku 7 hari
     });
 
+    // 1. CEK APAKAH USER INI SUDAH PUNYA SIDIK JARI
+    const userPasskeys = await prisma.passkey.findMany({
+      where: { userId: user.id },
+    });
+    const hasBiometric = userPasskeys.length > 0; // true kalau sudah ada, false kalau belum
+
     // Kirim token dan data user (kecuali password) ke frontend
-    res.status(200).json({
-      message: "Login sukses!",
+    res.json({
+      message: "Login berhasil",
       token,
       user: {
         id: user.id,
-        namaLengkap: user.namaLengkap,
+        name: user.name,
         email: user.email,
+        role: user.role,
+        hasBiometric: hasBiometric, // <--- Ini kata kunci rahasia kita!
       },
     });
   } catch (error) {

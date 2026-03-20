@@ -3,7 +3,10 @@ import { gsap } from "gsap";
 import { Sparkles, ArrowRight } from "lucide-react"; // Ikon Coffee diganti jadi Sparkles
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { startRegistration } from "@simplewebauthn/browser";
+import {
+  startRegistration,
+  startAuthentication,
+} from "@simplewebauthn/browser";
 
 const Login = () => {
   const formRef = useRef(null);
@@ -30,28 +33,55 @@ const Login = () => {
         formData,
       );
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      alert("Selamat datang kembali, " + response.data.user.namaLengkap + "!");
+      const userData = response.data.user;
 
-      if (!response.data.user.isBiometricActive) {
+      if (userData.hasBiometric) {
+        // ==========================================
+        // KONDISI 1: USER SUDAH PUNYA SIDIK JARI (2FA)
+        // ==========================================
+        try {
+          // 1. Minta tantangan Login
+          const optResp = await axios.post(
+            "https://finance-smart-nine.vercel.app/api/webauthn/login-options",
+            { email: formData.identifier },
+          );
+
+          // 2. Munculkan pop-up sidik jari untuk MASUK
+          const authResp = await startAuthentication(optResp.data);
+
+          // 3. Verifikasi ke backend
+          const verifyResp = await axios.post(
+            "https://finance-smart-nine.vercel.app/api/webauthn/login-verify",
+            {
+              email: formData.identifier,
+              data: authResp,
+            },
+          );
+
+          if (verifyResp.data.verified) {
+            alert("Verifikasi Sidik Jari Sukses! Meluncur ke Dashboard 🚀");
+            // Arahkan ke dashboard
+            // navigate('/dashboard');
+          }
+        } catch (error) {
+          console.error("Gagal verifikasi sidik jari:", error);
+          alert("Sidik jari tidak dikenali atau dibatalkan.");
+          return; // Hentikan proses, jangan masuk dashboard!
+        }
+      } else {
+        // ==========================================
+        // KONDISI 2: USER BELUM PUNYA SIDIK JARI
+        // ==========================================
         const setujuiBiometric = window.confirm(
-          "Ingin mengaktifkan Sidik Jari/Face ID untuk login berikutnya?",
+          "Ingin mengaktifkan Sidik Jari untuk keamanan ekstra?",
         );
         if (setujuiBiometric) {
           try {
-            // 1. Minta "Kode Tantangan" (Challenge) dari Backend
             const optionsResp = await axios.post(
               "https://finance-smart-nine.vercel.app/api/webauthn/register-options",
-              { email: formData.identifier }, // Kirim email user yang baru login
+              { email: formData.identifier },
             );
-            const options = optionsResp.data;
-
-            // 2. MUNCULKAN POP-UP SIDIK JARI BAWAAN SISTEM! 🪄
-            // Di sini layar akan meredup dan meminta scan jari/wajah
-            const attResp = await startRegistration(options);
-
-            // 3. Kalau scan berhasil, kirim "Gembok" (Public Key) ke Backend
+            const attResp = await startRegistration(optionsResp.data);
             const verifyResp = await axios.post(
               "https://finance-smart-nine.vercel.app/api/webauthn/register-verify",
               {
@@ -60,23 +90,16 @@ const Login = () => {
               },
             );
 
-            // 4. Kalau Backend bilang cocok, simpan statusnya
             if (verifyResp.data.verified) {
               alert("Yeay! Sidik Jari berhasil diamankan! 🎉");
-              localStorage.setItem("biometric_active", "true");
             }
           } catch (error) {
-            console.error("Gagal setup biometrik:", error);
-            alert(`Penyebab Gagal: ${error.name} | ${error.message}`);
-            if (error.name === "NotAllowedError") {
-              alert("Pendaftaran sidik jari dibatalkan oleh user.");
-            } else {
-              alert(
-                "Gagal mendaftarkan sidik jari. Pastikan perangkatmu mendukung WebAuthn.",
-              );
-            }
+            console.error("Gagal daftar biometrik:", error);
+            alert("Pendaftaran sidik jari dilewati.");
           }
         }
+        // Setelah daftar (atau nolak daftar), tetap arahkan ke dashboard
+        // navigate('/dashboard');
       }
 
       navigate("/dashboard");
