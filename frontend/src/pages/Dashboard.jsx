@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { gsap } from "gsap";
+import Swal from "sweetalert2";
 import {
   Utensils,
   Car,
@@ -76,6 +77,7 @@ const Dashboard = () => {
     tipe: "",
     judul: "",
     nominal: "",
+    kategori: "",
   });
 
   // Fungsi untuk menentukan sapaan berdasarkan jam
@@ -216,7 +218,7 @@ const Dashboard = () => {
       setScannedData(response.data.data);
     } catch (error) {
       console.error(error);
-      alert("Gagal membaca struk. Pastikan gambarnya jelas ya!");
+      Swal.fire({ icon: 'error', title: 'Gagal OCR', text: "Gagal membaca struk. Pastikan gambarnya jelas ya!", confirmButtonColor: '#3b82f6' });
     } finally {
       setIsScanning(false);
       e.target.value = null;
@@ -233,13 +235,13 @@ const Dashboard = () => {
         jumlah: parseInt(formPemasukan.jumlah.replace(/\./g, "")),
         kategori: formPemasukan.kategori,
       });
-      alert("Pemasukan berhasil ditambah!");
+      await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Pemasukan berhasil ditambah!", confirmButtonColor: '#10b981', timer: 1500, showConfirmButton: false });
       setShowPemasukanModal(false);
       setFormPemasukan({ sumber: "", jumlah: "", kategori: "Gaji" });
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error(error);
-      alert("Gagal menyimpan pemasukan.");
+      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: "Gagal menyimpan pemasukan.", confirmButtonColor: '#10b981' });
     }
   };
 
@@ -256,13 +258,13 @@ const Dashboard = () => {
           items: [], // Kosongkan karena ini input manual, bukan dari struk
         },
       );
-      alert("Sip! Pengeluaran berhasil dicatat.");
+      await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Sip! Pengeluaran berhasil dicatat.", confirmButtonColor: '#f43f5e', timer: 1500, showConfirmButton: false });
       setShowPengeluaranModal(false);
       setFormPengeluaran({ toko: "", total: "", kategori: "Makan" });
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error(error);
-      alert("Gagal menyimpan pengeluaran.");
+      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: "Gagal menyimpan pengeluaran.", confirmButtonColor: '#f43f5e' });
     }
   };
 
@@ -283,12 +285,12 @@ const Dashboard = () => {
         payload,
       );
 
-      alert("Sip! Pengeluaran dari struk berhasil dicatat.");
+      await Swal.fire({ icon: 'success', title: 'Tersimpan!', text: "Sip! Pengeluaran dari struk berhasil dicatat.", confirmButtonColor: '#3b82f6', timer: 1500, showConfirmButton: false });
       setScannedData(null);
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error(error);
-      alert("Gagal menyimpan data scan.");
+      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: "Gagal menyimpan data scan.", confirmButtonColor: '#3b82f6' });
     }
   };
 
@@ -297,7 +299,7 @@ const Dashboard = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Browsermu belum mendukung fitur rekam suara.");
+      Swal.fire({ icon: 'warning', title: 'Oops...', text: "Browsermu belum mendukung fitur rekam suara.", confirmButtonColor: '#f59e0b' });
       return;
     }
 
@@ -316,11 +318,11 @@ const Dashboard = () => {
             text: transcript,
           },
         );
-        alert(`Sip! ${res.data.tercatat.judul} berhasil dicatat!`);
+        await Swal.fire({ icon: 'success', title: 'Tercatat!', text: `Sip! ${res.data.tercatat.judul} berhasil dicatat!`, confirmButtonColor: '#3b82f6', timer: 2000, showConfirmButton: false });
         fetchSemuaData(userData.id);
       } catch (e) {
         console.error(e);
-        alert("Gagal memproses suara.");
+        Swal.fire({ icon: 'error', title: 'Gagal', text: "Gagal memproses suara.", confirmButtonColor: '#3b82f6' });
       } finally {
         setIsScanning(false);
       }
@@ -330,8 +332,17 @@ const Dashboard = () => {
   };
 
   const handleHapusTransaksi = async (id, tipe) => {
-    const konfirmasi = window.confirm("Yakin ingin menghapus transaksi ini?");
-    if (!konfirmasi) return;
+    const konfirmasi = await Swal.fire({
+      title: 'Hapus Transaksi?',
+      text: "Data transaksi ini tidak bisa dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal'
+    });
+    if (!konfirmasi.isConfirmed) return;
 
     try {
       // Tentukan endpoint berdasarkan tipe
@@ -341,12 +352,12 @@ const Dashboard = () => {
         `https://finance-smart-nine.vercel.app/api/${endpoint}/${id}`,
       );
 
-      alert("Transaksi berhasil dihapus!");
+      await Swal.fire({ icon: 'success', title: 'Terhapus!', text: "Transaksi berhasil dihapus!", confirmButtonColor: '#3b82f6', timer: 1500, showConfirmButton: false });
       // Panggil fetchSemuaData agar saldo dan list langsung update
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error("Gagal menghapus:", error);
-      alert("Waduh, gagal menghapus transaksi.");
+      Swal.fire({ icon: 'error', title: 'Gagal', text: "Waduh, gagal menghapus transaksi.", confirmButtonColor: '#3b82f6' });
     }
   };
 
@@ -363,20 +374,20 @@ const Dashboard = () => {
       // Sesuaikan payload dengan field di database kamu
       const payload =
         formEdit.tipe === "pemasukan"
-          ? { sumber: formEdit.judul, jumlah: angkaBersih }
-          : { toko: formEdit.judul, total: angkaBersih };
+          ? { sumber: formEdit.judul, jumlah: angkaBersih, kategori: formEdit.kategori }
+          : { toko: formEdit.judul, total: angkaBersih, kategori: formEdit.kategori };
 
       await axios.put(
         `https://finance-smart-nine.vercel.app/api/${endpoint}/${formEdit.id}`,
         payload,
       );
 
-      alert("Transaksi berhasil diperbarui!");
+      await Swal.fire({ icon: 'success', title: 'Diperbarui!', text: "Transaksi berhasil diperbarui!", confirmButtonColor: formEdit.tipe === 'pemasukan' ? '#10b981' : '#f43f5e', timer: 1500, showConfirmButton: false });
       setShowEditModal(false);
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error("Gagal mengubah:", error);
-      alert("Maaf, gagal memperbarui transaksi.");
+      Swal.fire({ icon: 'error', title: 'Gagal', text: "Maaf, gagal memperbarui transaksi.", confirmButtonColor: '#3b82f6' });
     }
   };
 
@@ -525,6 +536,7 @@ const Dashboard = () => {
                       tipe: i.tipe,
                       judul: i.judul,
                       nominal: i.nominal.toLocaleString("id-ID"),
+                      kategori: i.kategori || (i.tipe === "pemasukan" ? "Lainnya" : "Lainnya"),
                     });
                     setShowEditModal(true);
                   }}

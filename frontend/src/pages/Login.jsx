@@ -7,6 +7,7 @@ import {
   startRegistration,
   startAuthentication,
 } from "@simplewebauthn/browser";
+import Swal from "sweetalert2";
 
 const Login = () => {
   const formRef = useRef(null);
@@ -60,24 +61,32 @@ const Login = () => {
           );
 
           if (verifyResp.data.verified) {
-            alert("Verifikasi Sidik Jari Sukses! Meluncur ke Dashboard 🚀");
+            await Swal.fire({ icon: 'success', title: 'Akses Diberikan', text: "Verifikasi Sidik Jari Sukses! Meluncur ke Dashboard 🚀", confirmButtonColor: '#1a73e8', timer: 2000, showConfirmButton: false });
             localStorage.setItem("token", verifyResp.data.token);
             localStorage.setItem("user", JSON.stringify(verifyResp.data.user));
             // navigate akan dijalankan di bawah
           }
         } catch (error) {
           console.error("Gagal verifikasi sidik jari:", error);
-          alert("Sidik jari tidak dikenali atau dibatalkan.");
+          Swal.fire({ icon: 'warning', title: 'Akses Ditolak', text: "Sidik jari tidak dikenali atau dibatalkan.", confirmButtonColor: '#ef4444' });
           return; // Hentikan proses, jangan masuk dashboard!
         }
       } else {
         // ==========================================
         // KONDISI 2: USER BELUM PUNYA SIDIK JARI
         // ==========================================
-        const setujuiBiometric = window.confirm(
-          "Ingin mengaktifkan Sidik Jari untuk keamanan ekstra?",
-        );
-        if (setujuiBiometric) {
+        const konfirmasi = await Swal.fire({
+          title: 'Aktifkan Sidik Jari?',
+          text: "Login perdana sukses! Ingin mengaktifkan Sidik Jari untuk keamanan ekstra? (Sangat disarankan)",
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#1a73e8',
+          cancelButtonColor: '#94a3b8',
+          confirmButtonText: 'Ya, Aktifkan!',
+          cancelButtonText: 'Lewati Dulu'
+        });
+
+        if (konfirmasi.isConfirmed) {
           try {
             const optionsResp = await axios.post(
               "https://finance-smart-nine.vercel.app/api/webauthn/register-options",
@@ -93,11 +102,11 @@ const Login = () => {
             );
 
             if (verifyResp.data.verified) {
-              alert("Yeay! Sidik Jari berhasil diamankan! 🎉");
+              await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Yeay! Sidik Jari berhasil diamankan! 🎉", confirmButtonColor: '#1a73e8', timer: 2000, showConfirmButton: false });
             }
           } catch (error) {
             console.error("Gagal daftar biometrik:", error);
-            alert("Pendaftaran sidik jari dilewati.");
+            Swal.fire({ icon: 'info', title: 'Dilewati', text: "Pendaftaran sidik jari dilewati. Kamu bisa setup nanti.", confirmButtonColor: '#1a73e8' });
           }
         }
         
@@ -109,9 +118,9 @@ const Login = () => {
       navigate("/dashboard");
     } catch (error) {
       if (error?.response) {
-        alert(error.response.data.message);
+        Swal.fire({ icon: 'error', title: 'Gagal Login', text: error.response.data.message, confirmButtonColor: '#1a73e8' });
       } else {
-        alert("Waduh, servernya error atau belum nyala.");
+        Swal.fire({ icon: 'error', title: 'Koneksi Gagal', text: "Waduh, servernya error atau belum nyala.", confirmButtonColor: '#1a73e8' });
       }
     }
   };

@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const Register = () => {
   const formRef = useRef(null);
@@ -28,13 +29,13 @@ const Register = () => {
         "https://finance-smart-nine.vercel.app/api/register",
         formData,
       );
-      alert("Keren! " + response.data.message);
+      await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Keren! " + response.data.message, confirmButtonColor: '#1a73e8' });
       navigate("/login");
     } catch (error) {
       if (error.response) {
-        alert(error.response.data.message);
+        Swal.fire({ icon: 'error', title: 'Oops...', text: error.response.data.message, confirmButtonColor: '#1a73e8' });
       } else {
-        alert("Waduh, servernya error atau belum nyala.");
+        Swal.fire({ icon: 'error', title: 'Koneksi Gagal', text: "Waduh, servernya error atau belum nyala.", confirmButtonColor: '#1a73e8' });
       }
     }
   };

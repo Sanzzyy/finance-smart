@@ -176,42 +176,102 @@ export const PengeluaranModal = ({
 
 export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
   if (!show) return null;
+
+  const isPemasukan = form.tipe === "pemasukan";
+  
+  const kategoriPemasukan = [
+    { val: "Gaji", label: "Gaji 💰" },
+    { val: "Bonus", label: "Bonus 🎁" },
+    { val: "Jajan", label: "Jajan ☕" },
+    { val: "Darurat", label: "Darurat 🛡️" },
+    { val: "Lainnya", label: "Lainnya ❓" },
+  ];
+  
+  const kategoriPengeluaran = [
+    { val: "Makan", label: "Makan 🍽️" },
+    { val: "Transportasi", label: "Transportasi 🚗" },
+    { val: "Belanja", label: "Belanja 🛍️" },
+    { val: "Tagihan", label: "Tagihan 📄" },
+    { val: "Jajan", label: "Jajan ☕" },
+    { val: "Lainnya", label: "Lainnya ❓" },
+  ];
+
+  const kategoriOptions = isPemasukan ? kategoriPemasukan : kategoriPengeluaran;
+
   return (
-    <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl"
+        className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in-95 duration-200"
       >
-        <h2 className="text-[#1f2937] text-2xl font-bold mb-6">
+        <h2 className="text-slate-800 text-2xl font-black mb-6">
           Ubah Transaksi
         </h2>
+        
         <div className="space-y-5 mb-8">
-          <input
-            required
-            value={form.judul}
-            onChange={(e) => setForm({ ...form, judul: e.target.value })}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4"
-          />
-          <input
-            required
-            value={form.nominal}
-            onChange={(e) => setForm({ ...form, nominal: e.target.value })}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 font-bold text-lg"
-          />
+          <div>
+            <label className="text-slate-500 text-[10px] font-black mb-2 block uppercase tracking-widest">
+              Keterangan
+            </label>
+            <input
+              required
+              type="text"
+              value={form.judul}
+              onChange={(e) => setForm({ ...form, judul: e.target.value })}
+              className={`w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:ring-2 transition-all font-medium text-slate-700 ${isPemasukan ? 'focus:ring-emerald-500/30 focus:border-emerald-500' : 'focus:ring-rose-500/30 focus:border-rose-500'}`}
+              placeholder="Keterangan transaksi"
+            />
+          </div>
+
+          <div>
+            <label className="text-slate-500 text-[10px] font-black mb-2 block uppercase tracking-widest">
+              Nominal (Rp)
+            </label>
+            <input
+              required
+              type="text"
+              value={form.nominal}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                setForm({
+                  ...form,
+                  nominal: val ? parseInt(val).toLocaleString("id-ID") : "",
+                });
+              }}
+              className={`w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:ring-2 transition-all font-black text-xl ${isPemasukan ? 'text-emerald-600 focus:ring-emerald-500/30 focus:border-emerald-500' : 'text-rose-600 focus:ring-rose-500/30 focus:border-rose-500'}`}
+              placeholder="0"
+            />
+          </div>
+
+          <div>
+            <label className="text-slate-500 text-[10px] font-black mb-2 block uppercase tracking-widest">
+              Kategori
+            </label>
+            <select
+              value={form.kategori}
+              onChange={(e) => setForm({ ...form, kategori: e.target.value })}
+              className={`w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:ring-2 transition-all font-medium text-slate-700 cursor-pointer appearance-none ${isPemasukan ? 'focus:ring-emerald-500/30 focus:border-emerald-500' : 'focus:ring-rose-500/30 focus:border-rose-500'}`}
+            >
+              {kategoriOptions.map(opt => (
+                <option key={opt.val} value={opt.val}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
+
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-4 text-gray-500 font-bold"
+            className="flex-1 py-4 text-slate-400 font-bold hover:bg-slate-50 rounded-xl transition-all"
           >
             Batal
           </button>
           <button
             type="submit"
-            className="flex-1 bg-[#1a73e8] text-white font-bold rounded-xl"
+            className={`flex-[2] text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${isPemasukan ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'}`}
           >
-            Simpan
+            Simpan Perubahan
           </button>
         </div>
       </form>

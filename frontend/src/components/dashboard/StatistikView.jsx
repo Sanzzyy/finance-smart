@@ -11,7 +11,10 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, Activity, LayoutGrid, BarChart3 } from "lucide-react";
+import { TrendingUp, Activity, LayoutGrid, BarChart3, FileSpreadsheet, FileText } from "lucide-react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const COLORS = [
   "#ef4444", // Rose
@@ -70,6 +73,102 @@ const StatistikView = ({ riwayatTransaksi, filterWaktu, setFilterWaktu }) => {
 
   const trendData = prepareTrendData();
 
+  // --- FITUR EXPORT EXCEL ---
+  const exportToExcel = () => {
+    const exportData = riwayatTransaksi.map((item, index) => ({
+      No: index + 1,
+      Tanggal: new Date(item.tanggal).toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      Tipe: item.tipe.toUpperCase(),
+      Kategori: item.kategori || "-",
+      Keterangan: item.judul || item.toko || "-",
+      Nominal: item.nominal || item.total || item.jumlah || 0,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Transaksi");
+
+    // Format lebar kolom
+    const wscols = [
+      { wch: 5 }, // No
+      { wch: 25 }, // Tanggal
+      { wch: 15 }, // Tipe
+      { wch: 20 }, // Kategori
+      { wch: 30 }, // Keterangan
+      { wch: 15 }, // Nominal
+    ];
+    worksheet["!cols"] = wscols;
+
+    XLSX.writeFile(workbook, "Laporan_Keuangan_FinanceSmart.xlsx");
+  };
+
+  // --- FITUR EXPORT PDF ---
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.text("Laporan Keuangan - Finance Smart", 14, 22);
+
+    doc.setFontSize(11);
+    doc.setTextColor(100, 116, 139); // slate-500
+    const periodeMap = {
+      hari_ini: "Hari Ini",
+      minggu_ini: "Minggu Ini",
+      bulan_ini: "Bulan Ini",
+      semua: "Semua Waktu",
+    };
+    doc.text(`Periode: ${periodeMap[filterWaktu] || "Semua Waktu"}`, 14, 30);
+
+    const tableColumn = [
+      "No",
+      "Tanggal",
+      "Tipe",
+      "Kategori",
+      "Keterangan",
+      "Nominal",
+    ];
+    const tableRows = [];
+
+    riwayatTransaksi.forEach((item, index) => {
+      const rowData = [
+        index + 1,
+        new Date(item.tanggal).toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        item.tipe.toUpperCase(),
+        item.kategori || "-",
+        item.judul || item.toko || "-",
+        `Rp ${Number(item.nominal || item.total || item.jumlah || 0).toLocaleString(
+          "id-ID"
+        )}`,
+      ];
+      tableRows.push(rowData);
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [59, 130, 246] }, // Tailwind blue-500
+      alternateRowStyles: { fillColor: [248, 250, 252] }, // Tailwind slate-50
+      columnStyles: {
+        5: { halign: 'right' } // Rata kanan untuk kolom nominal
+      }
+    });
+
+    doc.save("Laporan_Keuangan_FinanceSmart.pdf");
+  };
+
   // --- CUSTOM TOOLTIP UNTUK AREA CHART ---
   const CustomTrendTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -107,7 +206,7 @@ const StatistikView = ({ riwayatTransaksi, filterWaktu, setFilterWaktu }) => {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* --- HEADER --- */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
             Analisis Pengeluaran
@@ -117,18 +216,39 @@ const StatistikView = ({ riwayatTransaksi, filterWaktu, setFilterWaktu }) => {
           </p>
         </div>
 
-        {/* --- DROPDOWN FILTER WAKTU --- */}
-        <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all shrink-0">
-          <select
-            value={filterWaktu}
-            onChange={(e) => setFilterWaktu(e.target.value)}
-            className="bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-4"
+        {/* --- ACTIONS: EXPORT & FILTER --- */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <button
+            onClick={exportToExcel}
+            className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white px-4 py-3 rounded-2xl border border-emerald-200 transition-colors font-bold text-sm shadow-sm group"
+            title="Download Excel"
           >
-            <option value="hari_ini">Hari Ini</option>
-            <option value="minggu_ini">Minggu Ini</option>
-            <option value="bulan_ini">Bulan Ini</option>
-            <option value="semua">Semua Waktu</option>
-          </select>
+            <FileSpreadsheet size={18} className="group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Excel</span>
+          </button>
+          
+          <button
+            onClick={exportToPDF}
+            className="flex items-center gap-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white px-4 py-3 rounded-2xl border border-rose-200 transition-colors font-bold text-sm shadow-sm group"
+            title="Download PDF"
+          >
+            <FileText size={18} className="group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">PDF</span>
+          </button>
+
+          {/* --- DROPDOWN FILTER WAKTU --- */}
+          <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+            <select
+              value={filterWaktu}
+              onChange={(e) => setFilterWaktu(e.target.value)}
+              className="bg-transparent text-sm font-bold text-slate-700 outline-none cursor-pointer appearance-none pr-4"
+            >
+              <option value="hari_ini">Hari Ini</option>
+              <option value="minggu_ini">Minggu Ini</option>
+              <option value="bulan_ini">Bulan Ini</option>
+              <option value="semua">Semua Waktu</option>
+            </select>
+          </div>
         </div>
       </div>
 
