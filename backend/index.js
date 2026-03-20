@@ -14,6 +14,8 @@ import { PrismaClient } from "@prisma/client";
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
 
 // Setup adapter native Postgres
@@ -245,6 +247,119 @@ app.post("/api/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Terjadi kesalahan di server." });
+  }
+});
+
+// --- API 3: Meminta Tantangan untuk LOGIN Biometrik ---
+app.post("/api/webauthn/login-options", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+
+    // Ambil semua gembok milik user ini
+    const userPasskeys = await prisma.passkey.findMany({
+      where: { userId: user.id },
+    });
+    if (userPasskeys.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Belum ada sidik jari yang terdaftar." });
+    }
+
+    // Buat opsi login
+    const options = await generateAuthenticationOptions({
+      rpID,
+      allowCredentials: userPasskeys.map((key) => ({
+        id: key.credentialID,
+        type: "public-key",
+      })),
+      userVerification: "preferred",
+    });
+
+    // Simpan tantangan ke database
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { currentChallenge: options.challenge },
+    });
+
+    res.json(options);
+  } catch (error) {
+    console.error("Error Login Options:", error);
+    res.status(500).json({ message: "Gagal menyiapkan login biometrik" });
+  }
+});
+
+// --- API 4: Verifikasi Sidik Jari untuk LOGIN ---
+app.post("/api/webauthn/login-verify", async (req, res) => {
+  try {
+    const { email, data } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    const expectedChallenge = user.currentChallenge;
+
+    // Cari gembok yang pas di database kita
+    const userPasskeys = await prisma.passkey.findMany({
+      where: { userId: user.id },
+    });
+    const passkey = userPasskeys.find(
+      (pk) => pk.credentialID.toString("base64url") === data.id,
+    );
+
+    if (!passkey)
+      return res
+        .status(400)
+        .json({ message: "Sidik jari tidak dikenali di sistem kami." });
+
+    const verification = await verifyAuthenticationResponse({
+      response: data,
+      expectedChallenge,
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+      authenticator: {
+        credentialPublicKey: passkey.credentialPK,
+        credentialID: passkey.credentialID,
+        counter: Number(passkey.counter),
+      },
+    });
+
+    if (verification.verified) {
+      // Update counter keamanan dan bersihkan tantangan
+      await prisma.passkey.update({
+        where: { id: passkey.id },
+        data: { counter: BigInt(verification.authenticationInfo.newCounter) },
+      });
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { currentChallenge: null },
+      });
+
+      // BIKIN TOKEN JWT KARENA LOGIN SUKSES! 🚀
+      const jwt = await import("jsonwebtoken"); // Pastikan JWT tersedia
+      const token = jwt.default.sign(
+        { id: user.id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" },
+      );
+
+      res.json({
+        verified: true,
+        message: "Login sidik jari berhasil!",
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } else {
+      res
+        .status(400)
+        .json({ verified: false, message: "Sidik jari tidak cocok." });
+    }
+  } catch (error) {
+    console.error("Error Verify Login:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 
