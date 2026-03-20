@@ -324,9 +324,9 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialPublicKey: new Uint8Array(passkey.credentialPK),
-        credentialID: Buffer.from(passkey.credentialID).toString("base64url"),
+      credential: {
+        publicKey: new Uint8Array(passkey.credentialPK), // <--- BERUBAH JADI 'publicKey'
+        id: Buffer.from(passkey.credentialID).toString("base64url"), // <--- BERUBAH JADI 'id'
         counter: Number(passkey.counter),
       },
     });
