@@ -140,21 +140,41 @@ app.post("/api/webauthn/register-verify", async (req, res) => {
     if (verification.verified) {
       const { registrationInfo } = verification;
 
-      // STRUKTUR BARU VERSI 10+:
-      const { credential } = registrationInfo;
-      const credentialID = credential.id;
-      const credentialPublicKey = credential.publicKey;
-      const counter = credential.counter;
+      // 1. KITA SADAP DATANYA! (Nanti akan muncul di Logs Vercel)
+      console.log(
+        "🕵️‍♂️ WUJUD ASLI REGISTRATION INFO:",
+        JSON.stringify(registrationInfo, null, 2),
+      );
 
-      // Simpan Gembok (Public Key) secara permanen di Database!
+      // 2. JARING PENGAMAN (Mencari di semua kemungkinan tempat, baik versi baru maupun lama)
+      const credentialID =
+        registrationInfo?.credential?.id || registrationInfo?.credentialID;
+      const credentialPK =
+        registrationInfo?.credential?.publicKey ||
+        registrationInfo?.credentialPublicKey;
+
+      // Di library versi terbaru, counter kadang pindah ke luar
+      const counter =
+        registrationInfo?.credential?.counter || registrationInfo?.counter || 0;
+
+      // 3. PENCEGAH CRASH: Kalau masih undefined, kita stop sebelum kena Buffer.from
+      if (!credentialID || !credentialPK) {
+        return res.status(500).json({
+          message: "Gagal ekstrak Gembok! Cek Logs Vercel untuk wujud aslinya.",
+        });
+      }
+
+      // 4. SIMPAN KE DATABASE (Aman dari tipe string maupun array biner)
       await prisma.passkey.create({
         data: {
           userId: user.id,
-          credentialID: Buffer.from(credentialID),
-          credentialPK: Buffer.from(credentialPublicKey),
+          // Kalau bentuknya teks (Base64URL) kita ubah jadi biner. Kalau sudah biner, langsung bungkus.
+          credentialID:
+            typeof credentialID === "string"
+              ? Buffer.from(credentialID, "base64url")
+              : Buffer.from(credentialID),
+          credentialPK: Buffer.from(credentialPK),
           counter: BigInt(counter),
-          where: { id: user.id },
-          data: { currentChallenge: null },
         },
       });
 
