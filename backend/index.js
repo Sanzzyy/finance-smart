@@ -139,7 +139,12 @@ app.post("/api/webauthn/register-verify", async (req, res) => {
 
     if (verification.verified) {
       const { registrationInfo } = verification;
-      const { credentialPublicKey, credentialID, counter } = registrationInfo;
+
+      // STRUKTUR BARU VERSI 10+:
+      const { credential } = registrationInfo;
+      const credentialID = credential.id;
+      const credentialPublicKey = credential.publicKey;
+      const counter = credential.counter;
 
       // Simpan Gembok (Public Key) secara permanen di Database!
       await prisma.passkey.create({
