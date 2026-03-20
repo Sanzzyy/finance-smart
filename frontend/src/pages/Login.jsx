@@ -42,7 +42,7 @@ const Login = () => {
           try {
             // 1. Minta "Kode Tantangan" (Challenge) dari Backend
             const optionsResp = await axios.post(
-              "http://localhost:5000/api/webauthn/register-options",
+              "https://finance-smart-nine.vercel.app/api/webauthn/register-options",
               { email: formData.identifier }, // Kirim email user yang baru login
             );
             const options = optionsResp.data;
@@ -53,7 +53,7 @@ const Login = () => {
 
             // 3. Kalau scan berhasil, kirim "Gembok" (Public Key) ke Backend
             const verifyResp = await axios.post(
-              "http://localhost:5000/api/webauthn/register-verify",
+              "https://finance-smart-nine.vercel.app/api/webauthn/register-verify",
               {
                 email: formData.identifier,
                 data: attResp,

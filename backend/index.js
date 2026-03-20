@@ -23,8 +23,8 @@ const prisma = new PrismaClient({ adapter });
 
 // Konfigurasi WebAuthn
 const rpName = "FinanceSmart";
-const rpID = "localhost"; // Saat rilis ke Vercel nanti, ini harus diganti jadi domain Vercel-mu
-const origin = `http://${rpID}:5173`;
+const rpID = "finance-smart-web.vercel.app"; // Saat rilis ke Vercel nanti, ini harus diganti jadi domain Vercel-mu
+const origin = `https://finance-smart-web.vercel.app`;
 
 // Brankas sementara untuk menyimpan 'Kode Tantangan'
 const challengeStore = {};
