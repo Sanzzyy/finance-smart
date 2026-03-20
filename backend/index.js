@@ -279,7 +279,7 @@ app.post("/api/webauthn/login-options", async (req, res) => {
     const options = await generateAuthenticationOptions({
       rpID,
       allowCredentials: userPasskeys.map((key) => ({
-        id: key.credentialID,
+        id: key.credentialID.toString("base64url"),
         type: "public-key",
       })),
       userVerification: "preferred",
@@ -325,7 +325,7 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       expectedRPID: rpID,
       authenticator: {
         credentialPublicKey: passkey.credentialPK,
-        credentialID: passkey.credentialID,
+        credentialID: passkey.credentialID.toString("base64url"),
         counter: Number(passkey.counter),
       },
     });
