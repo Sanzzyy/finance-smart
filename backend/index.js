@@ -344,7 +344,7 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       const jwt = await import("jsonwebtoken");
       const token = jwt.default.sign(
         { id: user.id, role: user.role },
-        process.env.JWT_SECRET,
+        JWT_SECRET,
         { expiresIn: "1d" },
       );
 
