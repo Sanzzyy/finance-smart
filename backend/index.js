@@ -258,38 +258,40 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// --- API 3: Meminta Tantangan untuk LOGIN Biometrik ---
+// =========================================================
+// API 3: Meminta Tantangan untuk LOGIN Biometrik (GANTI TOTAL)
+// =========================================================
 app.post("/api/webauthn/login-options", async (req, res) => {
   try {
     const { email } = req.body;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
 
-    // Ambil semua gembok milik user ini
     const userPasskeys = await prisma.passkey.findMany({
       where: { userId: user.id },
     });
     if (userPasskeys.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Belum ada sidik jari yang terdaftar." });
+      return res.status(400).json({ message: "Belum ada sidik jari." });
     }
 
-    // Buat opsi login
+    // MAP YANG SUPER AMAN DARI ERROR BUFFER/STRING:
+    const allowCredentials = userPasskeys.map((key) => {
+      let idString;
+      // Cek kalau datanya Buffer, ubah jadi base64url. Kalau bukan, paksa jadi String.
+      if (Buffer.isBuffer(key.credentialID)) {
+        idString = key.credentialID.toString("base64url");
+      } else {
+        idString = String(key.credentialID);
+      }
+      return { id: idString, type: "public-key" };
+    });
+
     const options = await generateAuthenticationOptions({
       rpID,
-      allowCredentials: userPasskeys.map((key) => {
-        // KITA PAKSA JADI TEKS MURNI AGAR LIBRARY TIDAK BINGUNG!
-        const idString = Buffer.from(key.credentialID).toString("base64url");
-        return {
-          id: idString,
-          type: "public-key",
-        };
-      }),
+      allowCredentials,
       userVerification: "preferred",
     });
 
-    // Simpan tantangan ke database
     await prisma.user.update({
       where: { id: user.id },
       data: { currentChallenge: options.challenge },
@@ -302,20 +304,26 @@ app.post("/api/webauthn/login-options", async (req, res) => {
   }
 });
 
-// --- API 4: Verifikasi Sidik Jari untuk LOGIN ---
+// =========================================================
+// API 4: Verifikasi Sidik Jari untuk LOGIN (GANTI TOTAL)
+// =========================================================
 app.post("/api/webauthn/login-verify", async (req, res) => {
   try {
     const { email, data } = req.body;
     const user = await prisma.user.findUnique({ where: { email } });
     const expectedChallenge = user.currentChallenge;
 
-    // Cari gembok yang pas di database kita
     const userPasskeys = await prisma.passkey.findMany({
       where: { userId: user.id },
     });
-    const passkey = userPasskeys.find(
-      (pk) => pk.credentialID.toString("base64url") === data.id,
-    );
+
+    // Pencarian gembok yang aman:
+    const passkey = userPasskeys.find((pk) => {
+      const dbId = Buffer.isBuffer(pk.credentialID)
+        ? pk.credentialID.toString("base64url")
+        : String(pk.credentialID);
+      return dbId === data.id;
+    });
 
     if (!passkey)
       return res
@@ -328,16 +336,14 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       expectedOrigin: origin,
       expectedRPID: rpID,
       authenticator: {
-        // WUJUD BINER MURNI UNTUK PUBLIC KEY:
-        credentialPublicKey: new Uint8Array(Buffer.from(passkey.credentialPK)),
-        // WUJUD TEKS MURNI UNTUK ID:
-        credentialID: Buffer.from(passkey.credentialID).toString("base64url"),
+        // PERHATIKAN INI: Memastikan formatnya tepat seperti permintaan WebAuthn v10
+        credentialPublicKey: new Uint8Array(passkey.credentialPK),
+        credentialID: passkey.credentialID.toString("base64url"),
         counter: Number(passkey.counter),
       },
     });
 
     if (verification.verified) {
-      // Update counter keamanan dan bersihkan tantangan
       await prisma.passkey.update({
         where: { id: passkey.id },
         data: { counter: BigInt(verification.authenticationInfo.newCounter) },
@@ -347,8 +353,7 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
         data: { currentChallenge: null },
       });
 
-      // BIKIN TOKEN JWT KARENA LOGIN SUKSES! 🚀
-      const jwt = await import("jsonwebtoken"); // Pastikan JWT tersedia
+      const jwt = await import("jsonwebtoken");
       const token = jwt.default.sign(
         { id: user.id, role: user.role },
         process.env.JWT_SECRET,
