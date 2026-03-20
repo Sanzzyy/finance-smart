@@ -276,13 +276,8 @@ app.post("/api/webauthn/login-options", async (req, res) => {
 
     // MAP YANG SUPER AMAN DARI ERROR BUFFER/STRING:
     const allowCredentials = userPasskeys.map((key) => {
-      let idString;
-      // Cek kalau datanya Buffer, ubah jadi base64url. Kalau bukan, paksa jadi String.
-      if (Buffer.isBuffer(key.credentialID)) {
-        idString = key.credentialID.toString("base64url");
-      } else {
-        idString = String(key.credentialID);
-      }
+      // RAHASIANYA: Bungkus dengan Buffer.from() agar bisa di-translate ke base64url!
+      const idString = Buffer.from(key.credentialID).toString("base64url");
       return { id: idString, type: "public-key" };
     });
 
@@ -319,9 +314,8 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
 
     // Pencarian gembok yang aman:
     const passkey = userPasskeys.find((pk) => {
-      const dbId = Buffer.isBuffer(pk.credentialID)
-        ? pk.credentialID.toString("base64url")
-        : String(pk.credentialID);
+      // BUNGKUS DENGAN BUFFER.FROM() JUGA
+      const dbId = Buffer.from(pk.credentialID).toString("base64url");
       return dbId === data.id;
     });
 
@@ -336,9 +330,9 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
       expectedOrigin: origin,
       expectedRPID: rpID,
       authenticator: {
-        // PERHATIKAN INI: Memastikan formatnya tepat seperti permintaan WebAuthn v10
         credentialPublicKey: new Uint8Array(passkey.credentialPK),
-        credentialID: passkey.credentialID.toString("base64url"),
+        // DAN BUNGKUS DI SINI JUGA!
+        credentialID: Buffer.from(passkey.credentialID).toString("base64url"),
         counter: Number(passkey.counter),
       },
     });
