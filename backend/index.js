@@ -241,17 +241,16 @@ app.post("/api/login", async (req, res) => {
     const hasBiometric = userPasskeys.length > 0; // true kalau sudah ada, false kalau belum
 
     // Kirim token dan data user (kecuali password) ke frontend
-    res.json({
-      message: "Login berhasil",
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        hasBiometric: hasBiometric, // <--- Ini kata kunci rahasia kita!
-      },
-    });
+      res.json({
+        message: "Login berhasil",
+        token,
+        user: {
+          id: user.id,
+          namaLengkap: user.namaLengkap,
+          email: user.email,
+          hasBiometric: hasBiometric,
+        },
+      });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Terjadi kesalahan di server." });
@@ -354,9 +353,9 @@ app.post("/api/webauthn/login-verify", async (req, res) => {
         token,
         user: {
           id: user.id,
-          name: user.name,
+          namaLengkap: user.namaLengkap,
           email: user.email,
-          role: user.role,
+          hasBiometric: true,
         },
       });
     } else {

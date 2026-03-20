@@ -443,7 +443,7 @@ const Dashboard = () => {
                 {/* Bagian Kiri: Teks Sapaan */}
                 <div>
                   <h2 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                    Halo, {userData.namaLengkap.split(" ")[0]}!
+                    Halo, {(userData?.namaLengkap || userData?.name || "User").split(" ")[0]}!
                     <span className="hover:rotate-12 hover:scale-110 transition-transform origin-bottom-right cursor-default inline-block">
                       👋
                     </span>
