@@ -16,6 +16,7 @@ model User {
   namaLengkap       String
   email             String        @unique
   password          String
+  currentChallenge  String?
   isBiometricActive Boolean       @default(false)
   createdAt         DateTime      @default(now())
   // Tambahkan relasi ini: Satu user bisa punya banyak pengeluaran

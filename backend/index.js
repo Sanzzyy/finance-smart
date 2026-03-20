@@ -26,9 +26,6 @@ const rpName = "FinanceSmart";
 const rpID = "finance-smart-web.vercel.app"; // Saat rilis ke Vercel nanti, ini harus diganti jadi domain Vercel-mu
 const origin = `https://finance-smart-web.vercel.app`;
 
-// Brankas sementara untuk menyimpan 'Kode Tantangan'
-const challengeStore = {};
-
 const app = express();
 // Middleware
 app.use(cors());
@@ -111,7 +108,10 @@ app.post("/api/webauthn/register-options", async (req, res) => {
     });
 
     // Simpan tantangannya ke brankas sementara kita
-    challengeStore[user.id] = options.challenge;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { currentChallenge: options.challenge },
+    });
 
     res.json(options);
   } catch (error) {
@@ -127,7 +127,7 @@ app.post("/api/webauthn/register-verify", async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     // Ambil tantangan yang tadi kita simpan
-    const expectedChallenge = challengeStore[user.id];
+    const expectedChallenge = user.currentChallenge;
 
     // Cocokkan data dari Frontend dengan ekspektasi Backend
     const verification = await verifyRegistrationResponse({
@@ -148,11 +148,16 @@ app.post("/api/webauthn/register-verify", async (req, res) => {
           credentialID: Buffer.from(credentialID),
           credentialPK: Buffer.from(credentialPublicKey),
           counter: BigInt(counter),
+          where: { id: user.id },
+          data: { currentChallenge: null },
         },
       });
 
-      // Hapus tantangan sementara karena sudah selesai
-      delete challengeStore[user.id];
+      // Hapus tantangan karena sudah sukses terpakai
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { currentChallenge: null },
+      });
 
       res.json({ verified: true, message: "Sidik jari berhasil diamankan!" });
     } else {

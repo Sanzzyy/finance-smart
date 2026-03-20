@@ -67,6 +67,7 @@ const Login = () => {
             }
           } catch (error) {
             console.error("Gagal setup biometrik:", error);
+            alert(`Penyebab Gagal: ${error.name} | ${error.message}`);
             if (error.name === "NotAllowedError") {
               alert("Pendaftaran sidik jari dibatalkan oleh user.");
             } else {
