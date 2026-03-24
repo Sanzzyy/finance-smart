@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 import { gsap } from "gsap";
 import { Sparkles, ArrowRight } from "lucide-react"; // Ikon Coffee diganti jadi Sparkles
 import { useNavigate, Link } from "react-router-dom";
@@ -29,10 +30,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "https://finance-smart-nine.vercel.app/api/login",
-        formData,
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/login`, formData);
 
       const userData = response.data.user;
       const initialToken = response.data.token;
@@ -44,7 +42,7 @@ const Login = () => {
         try {
           // 1. Minta tantangan Login
           const optResp = await axios.post(
-            "https://finance-smart-nine.vercel.app/api/webauthn/login-options",
+            `${API_BASE_URL}/api/webauthn/login-options`,
             { email: formData.identifier },
           );
 
@@ -53,7 +51,7 @@ const Login = () => {
 
           // 3. Verifikasi ke backend
           const verifyResp = await axios.post(
-            "https://finance-smart-nine.vercel.app/api/webauthn/login-verify",
+            `${API_BASE_URL}/api/webauthn/login-verify`,
             {
               email: formData.identifier,
               data: authResp,
@@ -61,14 +59,26 @@ const Login = () => {
           );
 
           if (verifyResp.data.verified) {
-            await Swal.fire({ icon: 'success', title: 'Akses Diberikan', text: "Verifikasi Sidik Jari Sukses! Meluncur ke Dashboard 🚀", confirmButtonColor: '#1a73e8', timer: 2000, showConfirmButton: false });
+            await Swal.fire({
+              icon: "success",
+              title: "Akses Diberikan",
+              text: "Verifikasi Sidik Jari Sukses! Meluncur ke Dashboard 🚀",
+              confirmButtonColor: "#1a73e8",
+              timer: 2000,
+              showConfirmButton: false,
+            });
             localStorage.setItem("token", verifyResp.data.token);
             localStorage.setItem("user", JSON.stringify(verifyResp.data.user));
             // navigate akan dijalankan di bawah
           }
         } catch (error) {
           console.error("Gagal verifikasi sidik jari:", error);
-          Swal.fire({ icon: 'warning', title: 'Akses Ditolak', text: "Sidik jari tidak dikenali atau dibatalkan.", confirmButtonColor: '#ef4444' });
+          Swal.fire({
+            icon: "warning",
+            title: "Akses Ditolak",
+            text: "Sidik jari tidak dikenali atau dibatalkan.",
+            confirmButtonColor: "#ef4444",
+          });
           return; // Hentikan proses, jangan masuk dashboard!
         }
       } else {
@@ -76,25 +86,25 @@ const Login = () => {
         // KONDISI 2: USER BELUM PUNYA SIDIK JARI
         // ==========================================
         const konfirmasi = await Swal.fire({
-          title: 'Aktifkan Sidik Jari?',
+          title: "Aktifkan Sidik Jari?",
           text: "Login perdana sukses! Ingin mengaktifkan Sidik Jari untuk keamanan ekstra? (Sangat disarankan)",
-          icon: 'question',
+          icon: "question",
           showCancelButton: true,
-          confirmButtonColor: '#1a73e8',
-          cancelButtonColor: '#94a3b8',
-          confirmButtonText: 'Ya, Aktifkan!',
-          cancelButtonText: 'Lewati Dulu'
+          confirmButtonColor: "#1a73e8",
+          cancelButtonColor: "#94a3b8",
+          confirmButtonText: "Ya, Aktifkan!",
+          cancelButtonText: "Lewati Dulu",
         });
 
         if (konfirmasi.isConfirmed) {
           try {
             const optionsResp = await axios.post(
-              "https://finance-smart-nine.vercel.app/api/webauthn/register-options",
+              `${API_BASE_URL}/api/webauthn/register-options`,
               { email: formData.identifier },
             );
             const attResp = await startRegistration(optionsResp.data);
             const verifyResp = await axios.post(
-              "https://finance-smart-nine.vercel.app/api/webauthn/register-verify",
+              `${API_BASE_URL}/api/webauthn/register-verify`,
               {
                 email: formData.identifier,
                 data: attResp,
@@ -102,14 +112,26 @@ const Login = () => {
             );
 
             if (verifyResp.data.verified) {
-              await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Yeay! Sidik Jari berhasil diamankan! 🎉", confirmButtonColor: '#1a73e8', timer: 2000, showConfirmButton: false });
+              await Swal.fire({
+                icon: "success",
+                title: "Berhasil!",
+                text: "Yeay! Sidik Jari berhasil diamankan! 🎉",
+                confirmButtonColor: "#1a73e8",
+                timer: 2000,
+                showConfirmButton: false,
+              });
             }
           } catch (error) {
             console.error("Gagal daftar biometrik:", error);
-            Swal.fire({ icon: 'info', title: 'Dilewati', text: "Pendaftaran sidik jari dilewati. Kamu bisa setup nanti.", confirmButtonColor: '#1a73e8' });
+            Swal.fire({
+              icon: "info",
+              title: "Dilewati",
+              text: "Pendaftaran sidik jari dilewati. Kamu bisa setup nanti.",
+              confirmButtonColor: "#1a73e8",
+            });
           }
         }
-        
+
         // Simpan data login biasa karena user tidak punya biometrik untuk step ini
         localStorage.setItem("token", initialToken);
         localStorage.setItem("user", JSON.stringify(userData));
@@ -118,9 +140,19 @@ const Login = () => {
       navigate("/dashboard");
     } catch (error) {
       if (error?.response) {
-        Swal.fire({ icon: 'error', title: 'Gagal Login', text: error.response.data.message, confirmButtonColor: '#1a73e8' });
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Login",
+          text: error.response.data.message,
+          confirmButtonColor: "#1a73e8",
+        });
       } else {
-        Swal.fire({ icon: 'error', title: 'Koneksi Gagal', text: "Waduh, servernya error atau belum nyala.", confirmButtonColor: '#1a73e8' });
+        Swal.fire({
+          icon: "error",
+          title: "Koneksi Gagal",
+          text: "Waduh, servernya error atau belum nyala.",
+          confirmButtonColor: "#1a73e8",
+        });
       }
     }
   };

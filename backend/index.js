@@ -590,21 +590,23 @@ app.post("/api/voice", async (req, res) => {
       "Makan, Transportasi, Belanja, Hiburan, Tagihan, Kesehatan, Pendidikan, Jajan, Gaji, Bonus, Darurat, Lainnya";
 
     const prompt = `
-      Ekstrak data keuangan dari teks ini: "${text}"
+      Penting: Ekstrak SEMUA transaksi keuangan dari teks ini secara teliti: "${text}"
       Daftar kategori yang boleh digunakan: ${daftarKategori}
       
-      Tugas:
+      Tugas untuk *setiap* item/transaksi yang kamu temukan:
       1. Tentukan 'tipe' ("pemasukan" atau "pengeluaran").
       2. Tentukan 'judul' (nama barang/sumber).
       3. Tentukan 'nominal' (angka murni).
       
-     Kembalikan hanya dalam format JSON:
-      {
-        "judul": "nama transaksi",
-        "nominal": 10000,
-        "tipe": "pemasukan/pengeluaran",
-        "kategori": "Pilih salah satu dari daftar kategori di atas"
-      }
+     Kembalikan HANYA dalam format Array JSON seperti ini:
+      [
+        {
+          "judul": "nama transaksi",
+          "nominal": 10000,
+          "tipe": "pemasukan/pengeluaran",
+          "kategori": "Pilih salah satu dari daftar kategori di atas"
+        }
+      ]
     `;
 
     const response = await fetch(
@@ -639,33 +641,41 @@ app.post("/api/voice", async (req, res) => {
       .trim();
     const data = JSON.parse(cleanJson);
 
-    // Mencegah AI mengembalikan spasi berlebih atau string kotor
-    const kategoriBersih = data.kategori ? data.kategori.trim() : "Lainnya";
+    // Amankan bentuk data apakah JSON Object atau Array
+    const transactions = Array.isArray(data) ? data : [data];
+    const savedTrx = [];
 
-    if (data.tipe === "pemasukan") {
-      await prisma.pemasukan.create({
-        data: {
-          userId: userId,
-          sumber: data.judul,
-          jumlah: data.nominal,
-          kategori: kategoriBersih,
-        },
-      });
-    } else {
-      await prisma.pengeluaran.create({
-        data: {
-          userId: userId,
-          toko: data.judul,
-          total: data.nominal,
-          kategori: kategoriBersih,
-          items: JSON.stringify([{ nama: data.judul, harga: data.nominal }]),
-        },
-      });
+    // Lakukan loop penyimpanan
+    for (const trx of transactions) {
+      // Mencegah AI mengembalikan spasi berlebih atau string kotor
+      const kategoriBersih = trx.kategori ? trx.kategori.trim() : "Lainnya";
+
+      if (trx.tipe === "pemasukan") {
+        await prisma.pemasukan.create({
+          data: {
+            userId: userId,
+            sumber: trx.judul,
+            jumlah: trx.nominal,
+            kategori: kategoriBersih,
+          },
+        });
+      } else {
+        await prisma.pengeluaran.create({
+          data: {
+            userId: userId,
+            toko: trx.judul,
+            total: trx.nominal,
+            kategori: kategoriBersih,
+            items: JSON.stringify([{ nama: trx.judul, harga: trx.nominal }]),
+          },
+        });
+      }
+      savedTrx.push(trx);
     }
 
     res.status(200).json({
       message: "Berhasil dicatat!",
-      tercatat: data,
+      tercatat: savedTrx,
     });
   } catch (error) {
     console.error("Error voice command:", error);

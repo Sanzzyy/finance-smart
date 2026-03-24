@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 // Import Komponen Modular
 import Sidebar from "../components/dashboard/Sidebar";
 import BalanceCard from "../components/dashboard/BalanceCard";
@@ -137,12 +138,8 @@ const Dashboard = () => {
   const fetchSemuaData = async (userId) => {
     try {
       const [resPeng, resPem] = await Promise.all([
-        axios.get(
-          `https://finance-smart-nine.vercel.app/api/pengeluaran/${userId}`,
-        ),
-        axios.get(
-          `https://finance-smart-nine.vercel.app/api/pemasukan/${userId}`,
-        ),
+        axios.get(`${API_BASE_URL}/api/pengeluaran/${userId}`),
+        axios.get(`${API_BASE_URL}/api/pemasukan/${userId}`),
       ]);
       const dataPeng = resPeng.data.data.map((i) => ({
         ...i,
@@ -208,17 +205,18 @@ const Dashboard = () => {
 
     try {
       setIsScanning(true);
-      const response = await axios.post(
-        "https://finance-smart-nine.vercel.app/api/scan",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/scan`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setScannedData(response.data.data);
     } catch (error) {
       console.error(error);
-      Swal.fire({ icon: 'error', title: 'Gagal OCR', text: "Gagal membaca struk. Pastikan gambarnya jelas ya!", confirmButtonColor: '#3b82f6' });
+      Swal.fire({
+        icon: "error",
+        title: "Gagal OCR",
+        text: "Gagal membaca struk. Pastikan gambarnya jelas ya!",
+        confirmButtonColor: "#3b82f6",
+      });
     } finally {
       setIsScanning(false);
       e.target.value = null;
@@ -229,42 +227,63 @@ const Dashboard = () => {
   const handleSimpanPemasukan = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://finance-smart-nine.vercel.app/api/pemasukan", {
+      await axios.post(`${API_BASE_URL}/api/pemasukan`, {
         userId: userData.id,
         sumber: formPemasukan.sumber,
         jumlah: parseInt(formPemasukan.jumlah.replace(/\./g, "")),
         kategori: formPemasukan.kategori,
       });
-      await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Pemasukan berhasil ditambah!", confirmButtonColor: '#10b981', timer: 1500, showConfirmButton: false });
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Pemasukan berhasil ditambah!",
+        confirmButtonColor: "#10b981",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       setShowPemasukanModal(false);
       setFormPemasukan({ sumber: "", jumlah: "", kategori: "Gaji" });
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error(error);
-      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: "Gagal menyimpan pemasukan.", confirmButtonColor: '#10b981' });
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menyimpan",
+        text: "Gagal menyimpan pemasukan.",
+        confirmButtonColor: "#10b981",
+      });
     }
   };
 
   const handleSimpanPengeluaranManual = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(
-        "https://finance-smart-nine.vercel.app/api/pengeluaran",
-        {
-          userId: userData.id,
-          toko: formPengeluaran.toko,
-          total: parseInt(formPengeluaran.total.replace(/\./g, "")),
-          kategori: formPengeluaran.kategori,
-          items: [], // Kosongkan karena ini input manual, bukan dari struk
-        },
-      );
-      await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Sip! Pengeluaran berhasil dicatat.", confirmButtonColor: '#f43f5e', timer: 1500, showConfirmButton: false });
+      await axios.post(`${API_BASE_URL}/api/pengeluaran`, {
+        userId: userData.id,
+        toko: formPengeluaran.toko,
+        total: parseInt(formPengeluaran.total.replace(/\./g, "")),
+        kategori: formPengeluaran.kategori,
+        items: [], // Kosongkan karena ini input manual, bukan dari struk
+      });
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Sip! Pengeluaran berhasil dicatat.",
+        confirmButtonColor: "#f43f5e",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       setShowPengeluaranModal(false);
       setFormPengeluaran({ toko: "", total: "", kategori: "Makan" });
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error(error);
-      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: "Gagal menyimpan pengeluaran.", confirmButtonColor: '#f43f5e' });
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menyimpan",
+        text: "Gagal menyimpan pengeluaran.",
+        confirmButtonColor: "#f43f5e",
+      });
     }
   };
 
@@ -280,17 +299,26 @@ const Dashboard = () => {
         items: scannedData.items || [],
       };
 
-      await axios.post(
-        "https://finance-smart-nine.vercel.app/api/pengeluaran",
-        payload,
-      );
+      await axios.post(`${API_BASE_URL}/api/pengeluaran`, payload);
 
-      await Swal.fire({ icon: 'success', title: 'Tersimpan!', text: "Sip! Pengeluaran dari struk berhasil dicatat.", confirmButtonColor: '#3b82f6', timer: 1500, showConfirmButton: false });
+      await Swal.fire({
+        icon: "success",
+        title: "Tersimpan!",
+        text: "Sip! Pengeluaran dari struk berhasil dicatat.",
+        confirmButtonColor: "#3b82f6",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       setScannedData(null);
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error(error);
-      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: "Gagal menyimpan data scan.", confirmButtonColor: '#3b82f6' });
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menyimpan",
+        text: "Gagal menyimpan data scan.",
+        confirmButtonColor: "#3b82f6",
+      });
     }
   };
 
@@ -299,7 +327,12 @@ const Dashboard = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      Swal.fire({ icon: 'warning', title: 'Oops...', text: "Browsermu belum mendukung fitur rekam suara.", confirmButtonColor: '#f59e0b' });
+      Swal.fire({
+        icon: "warning",
+        title: "Oops...",
+        text: "Browsermu belum mendukung fitur rekam suara.",
+        confirmButtonColor: "#f59e0b",
+      });
       return;
     }
 
@@ -311,18 +344,38 @@ const Dashboard = () => {
       setIsListening(false);
       setIsScanning(true);
       try {
-        const res = await axios.post(
-          "https://finance-smart-nine.vercel.app/api/voice",
-          {
-            userId: userData.id,
-            text: transcript,
-          },
-        );
-        await Swal.fire({ icon: 'success', title: 'Tercatat!', text: `Sip! ${res.data.tercatat.judul} berhasil dicatat!`, confirmButtonColor: '#3b82f6', timer: 2000, showConfirmButton: false });
+        const res = await axios.post(`${API_BASE_URL}/api/voice`, {
+          userId: userData.id,
+          text: transcript,
+        });
+
+        const tercatatList = res.data.tercatat;
+        const totalTrx = tercatatList.length;
+
+        const summaryText = tercatatList
+          .map(
+            (t) =>
+              `- ${t.judul} (${t.tipe === "pemasukan" ? "Pemasukan" : "Pengeluaran"})`,
+          )
+          .join("<br/>");
+
+        await Swal.fire({
+          icon: "success",
+          title: "Multi-Transaksi Tersimpan!",
+          html: `Sip! <b>${totalTrx} transaksi</b> berhasil dicatat:<br/><br/><div style="text-align:left; font-size: 0.9em; padding-left: 20px;">${summaryText}</div>`,
+          confirmButtonColor: "#3b82f6",
+          timer: 5000,
+          showConfirmButton: false,
+        });
         fetchSemuaData(userData.id);
       } catch (e) {
         console.error(e);
-        Swal.fire({ icon: 'error', title: 'Gagal', text: "Gagal memproses suara.", confirmButtonColor: '#3b82f6' });
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Gagal memproses suara.",
+          confirmButtonColor: "#3b82f6",
+        });
       } finally {
         setIsScanning(false);
       }
@@ -333,14 +386,14 @@ const Dashboard = () => {
 
   const handleHapusTransaksi = async (id, tipe) => {
     const konfirmasi = await Swal.fire({
-      title: 'Hapus Transaksi?',
+      title: "Hapus Transaksi?",
       text: "Data transaksi ini tidak bisa dikembalikan!",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Ya, Hapus!',
-      cancelButtonText: 'Batal'
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
     });
     if (!konfirmasi.isConfirmed) return;
 
@@ -348,16 +401,26 @@ const Dashboard = () => {
       // Tentukan endpoint berdasarkan tipe
       const endpoint = tipe === "pemasukan" ? "pemasukan" : "pengeluaran";
 
-      await axios.delete(
-        `https://finance-smart-nine.vercel.app/api/${endpoint}/${id}`,
-      );
+      await axios.delete(`${API_BASE_URL}/api/${endpoint}/${id}`);
 
-      await Swal.fire({ icon: 'success', title: 'Terhapus!', text: "Transaksi berhasil dihapus!", confirmButtonColor: '#3b82f6', timer: 1500, showConfirmButton: false });
+      await Swal.fire({
+        icon: "success",
+        title: "Terhapus!",
+        text: "Transaksi berhasil dihapus!",
+        confirmButtonColor: "#3b82f6",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       // Panggil fetchSemuaData agar saldo dan list langsung update
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error("Gagal menghapus:", error);
-      Swal.fire({ icon: 'error', title: 'Gagal', text: "Waduh, gagal menghapus transaksi.", confirmButtonColor: '#3b82f6' });
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Waduh, gagal menghapus transaksi.",
+        confirmButtonColor: "#3b82f6",
+      });
     }
   };
 
@@ -374,20 +437,41 @@ const Dashboard = () => {
       // Sesuaikan payload dengan field di database kamu
       const payload =
         formEdit.tipe === "pemasukan"
-          ? { sumber: formEdit.judul, jumlah: angkaBersih, kategori: formEdit.kategori }
-          : { toko: formEdit.judul, total: angkaBersih, kategori: formEdit.kategori };
+          ? {
+              sumber: formEdit.judul,
+              jumlah: angkaBersih,
+              kategori: formEdit.kategori,
+            }
+          : {
+              toko: formEdit.judul,
+              total: angkaBersih,
+              kategori: formEdit.kategori,
+            };
 
       await axios.put(
-        `https://finance-smart-nine.vercel.app/api/${endpoint}/${formEdit.id}`,
+        `${API_BASE_URL}/api/${endpoint}/${formEdit.id}`,
         payload,
       );
 
-      await Swal.fire({ icon: 'success', title: 'Diperbarui!', text: "Transaksi berhasil diperbarui!", confirmButtonColor: formEdit.tipe === 'pemasukan' ? '#10b981' : '#f43f5e', timer: 1500, showConfirmButton: false });
+      await Swal.fire({
+        icon: "success",
+        title: "Diperbarui!",
+        text: "Transaksi berhasil diperbarui!",
+        confirmButtonColor:
+          formEdit.tipe === "pemasukan" ? "#10b981" : "#f43f5e",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       setShowEditModal(false);
       fetchSemuaData(userData.id);
     } catch (error) {
       console.error("Gagal mengubah:", error);
-      Swal.fire({ icon: 'error', title: 'Gagal', text: "Maaf, gagal memperbarui transaksi.", confirmButtonColor: '#3b82f6' });
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Maaf, gagal memperbarui transaksi.",
+        confirmButtonColor: "#3b82f6",
+      });
     }
   };
 
@@ -536,7 +620,9 @@ const Dashboard = () => {
                       tipe: i.tipe,
                       judul: i.judul,
                       nominal: i.nominal.toLocaleString("id-ID"),
-                      kategori: i.kategori || (i.tipe === "pemasukan" ? "Lainnya" : "Lainnya"),
+                      kategori:
+                        i.kategori ||
+                        (i.tipe === "pemasukan" ? "Lainnya" : "Lainnya"),
                     });
                     setShowEditModal(true);
                   }}

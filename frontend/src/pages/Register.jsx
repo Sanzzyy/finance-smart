@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 import { gsap } from "gsap";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -26,16 +27,31 @@ const Register = () => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "https://finance-smart-nine.vercel.app/api/register",
+        `${API_BASE_URL}/api/register`,
         formData,
       );
-      await Swal.fire({ icon: 'success', title: 'Berhasil!', text: "Keren! " + response.data.message, confirmButtonColor: '#1a73e8' });
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Keren! " + response.data.message,
+        confirmButtonColor: "#1a73e8",
+      });
       navigate("/login");
     } catch (error) {
       if (error.response) {
-        Swal.fire({ icon: 'error', title: 'Oops...', text: error.response.data.message, confirmButtonColor: '#1a73e8' });
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: error.response.data.message,
+          confirmButtonColor: "#1a73e8",
+        });
       } else {
-        Swal.fire({ icon: 'error', title: 'Koneksi Gagal', text: "Waduh, servernya error atau belum nyala.", confirmButtonColor: '#1a73e8' });
+        Swal.fire({
+          icon: "error",
+          title: "Koneksi Gagal",
+          text: "Waduh, servernya error atau belum nyala.",
+          confirmButtonColor: "#1a73e8",
+        });
       }
     }
   };

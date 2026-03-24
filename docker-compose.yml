@@ -1,0 +1,32 @@
+services:
+  # 1. DATABASE POSTGRESQL
+  db:
+    image: postgres:15-alpine
+    container_name: financesmart-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: financesmart_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  # 2. PRISMA STUDIO (Opsional, tapi enak buat pantau data)
+  studio:
+    image: node:20-alpine
+    container_name: financesmart-studio
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: npx prisma studio --browser none --port 5555
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: "postgresql://postgres.dvxmkjdlqtwmuflvclhj:k0vN8no7dFfdWwO6@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres"
+    depends_on:
+      - db
+
+volumes:
+  db-data:
