@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 import { gsap } from "gsap";
-import { Sparkles, ArrowRight } from "lucide-react"; // Ikon Coffee diganti jadi Sparkles
+import { Sparkles, ArrowRight, Loader2 } from "lucide-react"; // Ikon Coffee diganti jadi Sparkles
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -18,6 +18,7 @@ const Login = () => {
     identifier: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -28,6 +29,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const response = await axios.post(`${API_BASE_URL}/api/login`, formData);
@@ -154,6 +156,8 @@ const Login = () => {
           confirmButtonColor: "#1a73e8",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -220,9 +224,18 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+            disabled={isLoading}
+            className={`w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 ${isLoading ? "opacity-70 cursor-not-allowed" : "active:scale-[0.98]"}`}
           >
-            Masuk Sekarang <ArrowRight size={18} />
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} /> Memproses...
+              </>
+            ) : (
+              <>
+                Masuk Sekarang <ArrowRight size={18} />
+              </>
+            )}
           </button>
         </form>
 

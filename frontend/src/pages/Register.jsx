@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 import { gsap } from "gsap";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -15,6 +15,7 @@ const Register = () => {
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,6 +26,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/register`,
@@ -53,6 +55,8 @@ const Register = () => {
           confirmButtonColor: "#1a73e8",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -137,9 +141,16 @@ const Register = () => {
           {/* Tombol Biru solid (Primary Blue Google) */}
           <button
             type="submit"
-            className="w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all mt-6 shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+            disabled={isLoading}
+            className={`w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all mt-6 shadow-lg shadow-blue-500/20 ${isLoading ? "opacity-70 cursor-not-allowed" : "active:scale-[0.98]"}`}
           >
-            Daftar Sekarang
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} /> Memproses...
+              </>
+            ) : (
+              "Daftar Sekarang"
+            )}
           </button>
         </form>
 
