@@ -1,5 +1,5 @@
 services:
-  # 1. DATABASE POSTGRESQL
+  # 1. DATABASE POSTGRESQL (LOKAL DOCKER)
   db:
     image: postgres:15-alpine
     container_name: financesmart-db
@@ -13,20 +13,47 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
-  # 2. PRISMA STUDIO (Opsional, tapi enak buat pantau data)
+  # 2. BACKEND (Tambahkan ini supaya backend-mu juga jalan di Docker)
+  backend:
+    build: ./backend
+    container_name: financesmart-backend
+    ports:
+      - "5000:5000"
+    environment:
+      # Perhatikan host-nya pakai 'db' bukan localhost
+      DATABASE_URL: "postgresql://postgres:password123@db:5432/financesmart_db?schema=public"
+    depends_on:
+      - db
+
+  # 3. PRISMA STUDIO
   studio:
     image: node:20-alpine
     container_name: financesmart-studio
     working_dir: /app
     volumes:
       - ./backend:/app
-    command: npx prisma studio --browser none --port 5555
+    # Kita perlu install prisma dulu di dalam container studio agar perintahnya jalan
+    command: sh -c "npm install && npx prisma studio --browser none --port 5555"
     ports:
       - "5555:5555"
     environment:
-      DATABASE_URL: "postgresql://postgres.dvxmkjdlqtwmuflvclhj:k0vN8no7dFfdWwO6@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres"
+      DATABASE_URL: "postgresql://postgres:password123@db:5432/financesmart_db?schema=public"
     depends_on:
       - db
 
+
+  # 4. FRONTEND
+  frontend:
+    build: ./frontend
+    container_name: financesmart-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    depends_on:
+      - backend
 volumes:
   db-data:
