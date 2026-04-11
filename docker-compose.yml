@@ -16,6 +16,8 @@ services:
   # 2. BACKEND (Tambahkan ini supaya backend-mu juga jalan di Docker)
   backend:
     build: ./backend
+    env_file:
+      - ./backend/.env
     container_name: financesmart-backend
     ports:
       - "5000:5000"
@@ -40,7 +42,6 @@ services:
       DATABASE_URL: "postgresql://postgres:password123@db:5432/financesmart_db?schema=public"
     depends_on:
       - db
-
 
   # 4. FRONTEND
   frontend:

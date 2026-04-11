@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 import { gsap } from "gsap";
-import { Sparkles, ArrowRight, Loader2 } from "lucide-react"; // Ikon Coffee diganti jadi Sparkles
+import { Sparkles, ArrowRight, Loader2, Sun, Moon } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import api from "../api/axiosInstance";
 import {
   startRegistration,
   startAuthentication,
@@ -19,6 +19,19 @@ const Login = () => {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
   const handleChange = (e) => {
     setFormData({
@@ -32,7 +45,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/login`, formData);
+      const response = await api.post(`/api/login`, formData);
 
       const userData = response.data.user;
       const initialToken = response.data.token;
@@ -43,22 +56,18 @@ const Login = () => {
         // ==========================================
         try {
           // 1. Minta tantangan Login
-          const optResp = await axios.post(
-            `${API_BASE_URL}/api/webauthn/login-options`,
-            { email: formData.identifier },
-          );
+          const optResp = await api.post(`/api/webauthn/login-options`, {
+            email: formData.identifier,
+          });
 
           // 2. Munculkan pop-up sidik jari untuk MASUK
           const authResp = await startAuthentication(optResp.data);
 
           // 3. Verifikasi ke backend
-          const verifyResp = await axios.post(
-            `${API_BASE_URL}/api/webauthn/login-verify`,
-            {
-              email: formData.identifier,
-              data: authResp,
-            },
-          );
+          const verifyResp = await api.post(`/api/webauthn/login-verify`, {
+            email: formData.identifier,
+            data: authResp,
+          });
 
           if (verifyResp.data.verified) {
             await Swal.fire({
@@ -100,18 +109,15 @@ const Login = () => {
 
         if (konfirmasi.isConfirmed) {
           try {
-            const optionsResp = await axios.post(
-              `${API_BASE_URL}/api/webauthn/register-options`,
+            const optionsResp = await api.post(
+              `/api/webauthn/register-options`,
               { email: formData.identifier },
             );
             const attResp = await startRegistration(optionsResp.data);
-            const verifyResp = await axios.post(
-              `${API_BASE_URL}/api/webauthn/register-verify`,
-              {
-                email: formData.identifier,
-                data: attResp,
-              },
-            );
+            const verifyResp = await api.post(`/api/webauthn/register-verify`, {
+              email: formData.identifier,
+              data: attResp,
+            });
 
             if (verifyResp.data.verified) {
               await Swal.fire({
@@ -170,30 +176,49 @@ const Login = () => {
   }, []);
 
   return (
-    // Background sama persis dengan halaman Register
-    <div className="min-h-screen bg-[#f0f4f9] flex items-center justify-center p-4 font-sans relative overflow-hidden">
-      {/* Aksen gradasi biru lembut */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-[#e8f0fe] to-transparent"></div>
+    <div className="min-h-screen bg-[#f0f4f9] dark:bg-slate-950 flex items-center justify-center p-4 font-sans relative overflow-hidden transition-colors duration-500">
+      {/* Tombol Toggle Theme Floating */}
+      <button
+        onClick={() => setIsDarkMode(!isDarkMode)}
+        className="absolute top-6 right-6 p-3 rounded-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/20 dark:border-slate-700/50 shadow-lg text-slate-800 dark:text-yellow-300 hover:scale-110 transition-all z-50 group"
+      >
+        {isDarkMode ? (
+          <Sun
+            size={24}
+            className="drop-shadow-md transition-transform group-hover:rotate-90"
+          />
+        ) : (
+          <Moon
+            size={24}
+            className="text-indigo-600 drop-shadow-md transition-transform group-hover:-rotate-12"
+          />
+        )}
+      </button>
+
+      {/* Aksen gradasi ambient modern */}
+      <div className="absolute top-[-20%] left-[-10%] w-96 h-96 bg-blue-400/30 dark:bg-blue-600/20 blur-[100px] rounded-full mix-blend-multiply dark:mix-blend-lighten pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-96 h-96 bg-indigo-400/30 dark:bg-indigo-600/20 blur-[100px] rounded-full mix-blend-multiply dark:mix-blend-lighten pointer-events-none"></div>
 
       <div
         ref={formRef}
-        // Card putih bersih dengan shadow
-        className="max-w-md w-full bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 relative z-10"
+        // Premium Glassmorphism Card
+        className="max-w-md w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-white/60 dark:border-slate-800 relative z-10"
       >
         <div className="text-center mb-10">
-          {/* Ikon Sparkles dengan background biru Google */}
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-[#e8f0fe] shadow-inner">
-            <Sparkles className="text-[#1a73e8] w-8 h-8" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 bg-gradient-to-tr from-blue-100 to-indigo-50 dark:from-slate-800 dark:to-slate-700 shadow-inner border border-white/50 dark:border-slate-600/50 transform rotate-3">
+            <Sparkles className="text-[#1a73e8] dark:text-blue-400 w-8 h-8 -rotate-3" />
           </div>
-          <h1 className="text-3xl font-bold text-[#1f2937] mb-2">Login</h1>
-          <p className="text-gray-500 text-sm">
-            Masuk untuk atur keuanganmu lebih pintar.
+          <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-2">
+            Selamat Datang
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            Masuk untuk mendominasi keuanganmu.
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+          <div className="space-y-1.5">
+            <label className="block text-slate-700 dark:text-slate-300 text-sm font-bold ml-1">
               Username / Email
             </label>
             <input
@@ -202,13 +227,13 @@ const Login = () => {
               value={formData.identifier}
               onChange={handleChange}
               required
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1a73e8]/30 focus:border-[#1a73e8] transition-all"
+              className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-400 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="Masukkan email kamu"
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
+          <div className="space-y-1.5">
+            <label className="block text-slate-700 dark:text-slate-300 text-sm font-bold ml-1">
               Password
             </label>
             <input
@@ -217,7 +242,7 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#1a73e8]/30 focus:border-[#1a73e8] transition-all"
+              className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-400 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="••••••••"
             />
           </div>
@@ -225,25 +250,26 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 ${isLoading ? "opacity-70 cursor-not-allowed" : "active:scale-[0.98]"}`}
+            className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 shadow-xl shadow-blue-500/30 dark:shadow-blue-500/20 mt-8 ${isLoading ? "opacity-70 cursor-not-allowed" : "hover:-translate-y-1 active:scale-[0.98]"}`}
           >
             {isLoading ? (
               <>
-                <Loader2 className="animate-spin" size={18} /> Memproses...
+                <Loader2 className="animate-spin" size={20} /> Memproses
+                Otorisasi...
               </>
             ) : (
               <>
-                Masuk Sekarang <ArrowRight size={18} />
+                Masuk Sekarang <ArrowRight size={20} />
               </>
             )}
           </button>
         </form>
 
-        <p className="text-center mt-8 text-gray-500 text-sm font-medium">
-          Belum punya akun?{" "}
+        <p className="text-center mt-10 text-slate-500 dark:text-slate-400 text-sm font-medium">
+          Pengguna baru?{" "}
           <Link
             to="/register"
-            className="text-[#1a73e8] font-bold hover:underline"
+            className="text-blue-600 dark:text-blue-400 font-bold hover:underline underline-offset-4"
           >
             Daftar di sini
           </Link>

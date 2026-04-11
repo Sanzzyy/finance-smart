@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-// Import Komponen Modular
+import { useNavigate } from "react-router-dom";
+import { gsap } from "gsap";
+import { Loader2, Menu, Wallet, Calendar, ChevronDown } from "lucide-react";
+
+// Komponen Tampilan
 import Sidebar from "../components/dashboard/Sidebar";
 import BalanceCard from "../components/dashboard/BalanceCard";
 import TransactionList from "../components/dashboard/TransactionList";
@@ -10,78 +13,94 @@ import {
   PengeluaranModal,
   EditModal,
   ScanResultModal,
+  KemampuanBeliModal,
 } from "../components/modals/Allmodals";
 
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { gsap } from "gsap";
-import Swal from "sweetalert2";
-import {
-  Utensils,
-  Car,
-  ShoppingBag,
-  Gamepad2,
-  FileText,
-  HeartPulse,
-  GraduationCap,
-  Coffee,
-  Banknote,
-  Gift,
-  HelpCircle,
-  Shield,
-  Loader2,
-  Menu,
-  Wallet,
-  Calendar,
-  ChevronDown,
-} from "lucide-react";
+// Hooks
+import { useDashboardData } from "../hooks/useDashboardData";
+import { useTransactions } from "../hooks/useTransactions";
+import { useSmartFeatures } from "../hooks/useSmartFeatures";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // States
+  // Layout & UI States
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scannedData, setScannedData] = useState(null);
-  const [isListening, setIsListening] = useState(false);
-
-  const [totalPemasukan, setTotalPemasukan] = useState(0);
-  const [totalPengeluaran, setTotalPengeluaran] = useState(0);
-  const [riwayatTransaksi, setRiwayatTransaksi] = useState([]);
-
-  const [rawPemasukan, setRawPemasukan] = useState([]);
-  const [rawPengeluaran, setRawPengeluaran] = useState([]);
-  const [filterWaktu, setFilterWaktu] = useState("bulan_ini");
-
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const [showPemasukanModal, setShowPemasukanModal] = useState(false);
-  const [formPemasukan, setFormPemasukan] = useState({
-    sumber: "",
-    jumlah: "",
-    kategori: "Gaji",
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
   });
+  const [showKemampuanModal, setShowKemampuanModal] = useState(false);
 
-  const [showPengeluaranModal, setShowPengeluaranModal] = useState(false);
-  const [formPengeluaran, setFormPengeluaran] = useState({
-    toko: "",
-    total: "",
-    kategori: "Makan",
-  });
+  // Efek Dark Mode Setting
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [formEdit, setFormEdit] = useState({
-    id: "",
-    tipe: "",
-    judul: "",
-    nominal: "",
-    kategori: "",
-  });
+  // Efek Autentikasi Pengguna
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) return navigate("/login");
+    setUserData(JSON.parse(user));
+  }, [navigate]);
 
-  // Fungsi untuk menentukan sapaan berdasarkan jam
+  // Ekstraksi Logika Bisnis Lewat Custom Hooks
+  const {
+    rawPemasukan,
+    rawPengeluaran,
+    filterWaktu,
+    setFilterWaktu,
+    totalPemasukan,
+    totalPengeluaran,
+    riwayatTransaksi,
+    fetchSemuaData,
+    isLoading,
+  } = useDashboardData(userData);
+
+  const {
+    showPemasukanModal,
+    setShowPemasukanModal,
+    formPemasukan,
+    setFormPemasukan,
+    handleSimpanPemasukan,
+    showPengeluaranModal,
+    setShowPengeluaranModal,
+    formPengeluaran,
+    setFormPengeluaran,
+    handleSimpanPengeluaranManual,
+    showEditModal,
+    setShowEditModal,
+    formEdit,
+    setFormEdit,
+    handleSimpanEdit,
+    handleHapusTransaksi,
+  } = useTransactions(userData, fetchSemuaData);
+
+  const {
+    isScanning,
+    scannedData,
+    setScannedData,
+    isListening,
+    handleFileChange,
+    handleSimpanPengeluaranScan,
+    handleVoiceRecord,
+  } = useSmartFeatures(userData, fetchSemuaData);
+
+  // === UI Helpers ===
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Selamat Pagi";
@@ -90,420 +109,79 @@ const Dashboard = () => {
     return "Selamat Malam";
   };
 
-  const ikonKategori = {
-    makan: <Utensils size={20} />,
-    transportasi: <Car size={20} />,
-    belanja: <ShoppingBag size={20} />,
-    hiburan: <Gamepad2 size={20} />,
-    tagihan: <FileText size={20} />,
-    kesehatan: <HeartPulse size={20} />,
-    pendidikan: <GraduationCap size={20} />,
-    jajan: <Coffee size={20} />,
-    gaji: <Banknote size={20} />,
-    bonus: <Gift size={20} />,
-    darurat: <Shield size={20} />,
-    lainnya: <HelpCircle size={20} />,
+  const getFilterLabel = () => {
+    switch (filterWaktu) {
+      case "hari_ini":
+        return "Hari Ini";
+      case "minggu_ini":
+        return "Minggu Ini";
+      case "bulan_ini":
+        return "Bulan Ini";
+      case "semua":
+        return "Semua Waktu";
+      default:
+        return "Hari Ini";
+    }
   };
 
-  // Logika Fetch & Handlers (Tetap di Induk karena mengelola data Global)
-
-  const filterByDate = (data, filter) => {
-    if (filter === "semua") return data;
+  const getFilterDateText = () => {
     const now = new Date();
-
-    return data.filter((item) => {
-      const itemDate = new Date(item.tanggal);
-
-      if (filter === "hari_ini") {
-        return itemDate.toDateString() === now.toDateString();
-      }
-      if (filter === "minggu_ini") {
-        const currentDay = now.getDay();
-        const distance = currentDay === 0 ? 6 : currentDay - 1; // Mulai dari Senin
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - distance);
-        startOfWeek.setHours(0, 0, 0, 0);
-        return itemDate >= startOfWeek;
-      }
-      if (filter === "bulan_ini") {
-        return (
-          itemDate.getMonth() === now.getMonth() &&
-          itemDate.getFullYear() === now.getFullYear()
-        );
-      }
-      return true;
-    });
-  };
-
-  const fetchSemuaData = async (userId) => {
-    try {
-      const [resPeng, resPem] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/pengeluaran/${userId}`),
-        axios.get(`${API_BASE_URL}/api/pemasukan/${userId}`),
-      ]);
-      const dataPeng = resPeng.data.data.map((i) => ({
-        ...i,
-        tipe: "pengeluaran",
-        judul: i.toko,
-        nominal: i.total,
-      }));
-      const dataPem = resPem.data.data.map((i) => ({
-        ...i,
-        tipe: "pemasukan",
-        judul: i.sumber,
-        nominal: i.jumlah,
-      }));
-
-      // Simpan data mentahnya
-      setRawPengeluaran(dataPeng);
-      setRawPemasukan(dataPem);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  // Efek ini otomatis berjalan kalau data mentah ATAU filterWaktu berubah
-  useEffect(() => {
-    const filteredPengeluaran = filterByDate(rawPengeluaran, filterWaktu);
-    const filteredPemasukan = filterByDate(rawPemasukan, filterWaktu);
-
-    setTotalPengeluaran(
-      filteredPengeluaran.reduce((sum, item) => sum + item.nominal, 0),
-    );
-    setTotalPemasukan(
-      filteredPemasukan.reduce((sum, item) => sum + item.nominal, 0),
-    );
-
-    const gabungan = [...filteredPengeluaran, ...filteredPemasukan].sort(
-      (a, b) => new Date(b.tanggal) - new Date(a.tanggal),
-    );
-
-    setRiwayatTransaksi(gabungan);
-  }, [rawPengeluaran, rawPemasukan, filterWaktu]);
-
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (!user) return navigate("/login");
-    const parsed = JSON.parse(user);
-    setUserData(parsed);
-    fetchSemuaData(parsed.id);
-  }, [navigate]);
-
-  // Handlers (Simpan, Hapus, Edit, dsb...) - Gunakan logika yang sudah kamu punya sebelumnya
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
-  };
-
-  // 1. Fungsi untuk menangani upload file (Scan Struk)
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("receipt", file);
-
-    try {
-      setIsScanning(true);
-      const response = await axios.post(`${API_BASE_URL}/api/scan`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setScannedData(response.data.data);
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal OCR",
-        text: "Gagal membaca struk. Pastikan gambarnya jelas ya!",
-        confirmButtonColor: "#3b82f6",
-      });
-    } finally {
-      setIsScanning(false);
-      e.target.value = null;
-    }
-  };
-
-  // 2. Fungsi untuk menyimpan data Pemasukan Baru (Manual)
-  const handleSimpanPemasukan = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${API_BASE_URL}/api/pemasukan`, {
-        userId: userData.id,
-        sumber: formPemasukan.sumber,
-        jumlah: parseInt(formPemasukan.jumlah.replace(/\./g, "")),
-        kategori: formPemasukan.kategori,
-      });
-      await Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: "Pemasukan berhasil ditambah!",
-        confirmButtonColor: "#10b981",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      setShowPemasukanModal(false);
-      setFormPemasukan({ sumber: "", jumlah: "", kategori: "Gaji" });
-      fetchSemuaData(userData.id);
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Menyimpan",
-        text: "Gagal menyimpan pemasukan.",
-        confirmButtonColor: "#10b981",
+    if (filterWaktu === "hari_ini") {
+      return now.toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
       });
     }
-  };
-
-  const handleSimpanPengeluaranManual = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${API_BASE_URL}/api/pengeluaran`, {
-        userId: userData.id,
-        toko: formPengeluaran.toko,
-        total: parseInt(formPengeluaran.total.replace(/\./g, "")),
-        kategori: formPengeluaran.kategori,
-        items: [], // Kosongkan karena ini input manual, bukan dari struk
-      });
-      await Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: "Sip! Pengeluaran berhasil dicatat.",
-        confirmButtonColor: "#f43f5e",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      setShowPengeluaranModal(false);
-      setFormPengeluaran({ toko: "", total: "", kategori: "Makan" });
-      fetchSemuaData(userData.id);
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Menyimpan",
-        text: "Gagal menyimpan pengeluaran.",
-        confirmButtonColor: "#f43f5e",
+    if (filterWaktu === "minggu_ini") {
+      const currentDay = now.getDay();
+      const distance = currentDay === 0 ? 6 : currentDay - 1;
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - distance);
+      return `${startOfWeek.toLocaleDateString("id-ID", { day: "numeric", month: "short" })} - ${now.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}`;
+    }
+    if (filterWaktu === "bulan_ini") {
+      return now.toLocaleDateString("id-ID", {
+        month: "long",
+        year: "numeric",
       });
     }
-  };
-
-  // 3. Fungsi untuk menyimpan data Pengeluaran hasil Scan
-  const handleSimpanPengeluaran = async () => {
-    try {
-      // Ambil data dari state scannedData
-      const payload = {
-        userId: userData.id,
-        toko: scannedData.judul || scannedData.toko || "Toko Umum",
-        total: parseInt(scannedData.nominal || scannedData.total || 0),
-        kategori: scannedData.kategori || "Lainnya",
-        items: scannedData.items || [],
-      };
-
-      await axios.post(`${API_BASE_URL}/api/pengeluaran`, payload);
-
-      await Swal.fire({
-        icon: "success",
-        title: "Tersimpan!",
-        text: "Sip! Pengeluaran dari struk berhasil dicatat.",
-        confirmButtonColor: "#3b82f6",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      setScannedData(null);
-      fetchSemuaData(userData.id);
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Menyimpan",
-        text: "Gagal menyimpan data scan.",
-        confirmButtonColor: "#3b82f6",
-      });
-    }
-  };
-
-  // 4. Fungsi untuk Voice Record
-  const handleVoiceRecord = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      Swal.fire({
-        icon: "warning",
-        title: "Oops...",
-        text: "Browsermu belum mendukung fitur rekam suara.",
-        confirmButtonColor: "#f59e0b",
-      });
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "id-ID";
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      setIsListening(false);
-      setIsScanning(true);
-      try {
-        const res = await axios.post(`${API_BASE_URL}/api/voice`, {
-          userId: userData.id,
-          text: transcript,
-        });
-
-        const tercatatList = res.data.tercatat;
-        const totalTrx = tercatatList.length;
-
-        const summaryText = tercatatList
-          .map(
-            (t) =>
-              `- ${t.judul} (${t.tipe === "pemasukan" ? "Pemasukan" : "Pengeluaran"})`,
-          )
-          .join("<br/>");
-
-        await Swal.fire({
-          icon: "success",
-          title: "Multi-Transaksi Tersimpan!",
-          html: `Sip! <b>${totalTrx} transaksi</b> berhasil dicatat:<br/><br/><div style="text-align:left; font-size: 0.9em; padding-left: 20px;">${summaryText}</div>`,
-          confirmButtonColor: "#3b82f6",
-          timer: 5000,
-          showConfirmButton: false,
-        });
-        fetchSemuaData(userData.id);
-      } catch (e) {
-        console.error(e);
-        Swal.fire({
-          icon: "error",
-          title: "Gagal",
-          text: "Gagal memproses suara.",
-          confirmButtonColor: "#3b82f6",
-        });
-      } finally {
-        setIsScanning(false);
-      }
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.start();
-  };
-
-  const handleHapusTransaksi = async (id, tipe) => {
-    const konfirmasi = await Swal.fire({
-      title: "Hapus Transaksi?",
-      text: "Data transaksi ini tidak bisa dikembalikan!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Ya, Hapus!",
-      cancelButtonText: "Batal",
-    });
-    if (!konfirmasi.isConfirmed) return;
-
-    try {
-      // Tentukan endpoint berdasarkan tipe
-      const endpoint = tipe === "pemasukan" ? "pemasukan" : "pengeluaran";
-
-      await axios.delete(`${API_BASE_URL}/api/${endpoint}/${id}`);
-
-      await Swal.fire({
-        icon: "success",
-        title: "Terhapus!",
-        text: "Transaksi berhasil dihapus!",
-        confirmButtonColor: "#3b82f6",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      // Panggil fetchSemuaData agar saldo dan list langsung update
-      fetchSemuaData(userData.id);
-    } catch (error) {
-      console.error("Gagal menghapus:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal",
-        text: "Waduh, gagal menghapus transaksi.",
-        confirmButtonColor: "#3b82f6",
-      });
-    }
-  };
-
-  const handleSimpanEdit = async (e) => {
-    e.preventDefault();
-    try {
-      // Bersihkan titik dari nominal (contoh: 10.000 jadi 10000)
-      const angkaBersih = parseInt(
-        formEdit.nominal.toString().replace(/\./g, ""),
-      );
-      const endpoint =
-        formEdit.tipe === "pemasukan" ? "pemasukan" : "pengeluaran";
-
-      // Sesuaikan payload dengan field di database kamu
-      const payload =
-        formEdit.tipe === "pemasukan"
-          ? {
-              sumber: formEdit.judul,
-              jumlah: angkaBersih,
-              kategori: formEdit.kategori,
-            }
-          : {
-              toko: formEdit.judul,
-              total: angkaBersih,
-              kategori: formEdit.kategori,
-            };
-
-      await axios.put(
-        `${API_BASE_URL}/api/${endpoint}/${formEdit.id}`,
-        payload,
-      );
-
-      await Swal.fire({
-        icon: "success",
-        title: "Diperbarui!",
-        text: "Transaksi berhasil diperbarui!",
-        confirmButtonColor:
-          formEdit.tipe === "pemasukan" ? "#10b981" : "#f43f5e",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      setShowEditModal(false);
-      fetchSemuaData(userData.id);
-    } catch (error) {
-      console.error("Gagal mengubah:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal",
-        text: "Maaf, gagal memperbarui transaksi.",
-        confirmButtonColor: "#3b82f6",
-      });
-    }
+    return "Semua Histori";
   };
 
   if (!userData) return null;
 
   return (
-    <div className="flex h-screen bg-[#f4f7fc] overflow-hidden">
-      {/* 1. HEADER KHUSUS MOBILE (Fix di atas) */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 z-40 px-6 flex justify-between items-center">
-        <div className="flex items-center gap-3 ">
+    <div className="flex h-screen bg-[#f4f7fc] dark:bg-slate-900 overflow-hidden transition-colors duration-300">
+      {/* HEADER KHUSUS MOBILE */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 z-40 px-6 flex justify-between items-center transition-colors duration-300">
+        <div className="flex items-center gap-3">
           <div className="bg-[#1a73e8] text-white p-2 rounded-xl shadow-lg shadow-blue-500/20">
             <Wallet size={20} />
           </div>
-          <h1 className="text-lg font-black text-[#1a73e8]">Finance Smart</h1>
+          <h1 className="text-lg font-black text-[#1a73e8] dark:text-blue-400">
+            Finance Smart
+          </h1>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2.5 bg-gray-50 text-gray-600 rounded-2xl hover:bg-gray-100 transition-all active:scale-95"
+          className="p-2.5 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all active:scale-95"
         >
           <Menu size={24} />
         </button>
       </header>
 
-      {/* Loading Overlay */}
+      {/* OVERLAY LOADING AI SCANNER */}
       {isScanning && (
-        <div className="fixed inset-0 z-[110] bg-white/80 backdrop-blur flex flex-col items-center justify-center">
-          <Loader2 className="animate-spin text-blue-600 w-12 h-12" />
-          <p className="font-bold text-blue-600">AI sedang memproses...</p>
+        <div className="fixed inset-0 z-[110] bg-white/80 dark:bg-slate-900/80 backdrop-blur flex flex-col items-center justify-center">
+          <Loader2 className="animate-spin text-blue-600 dark:text-blue-400 w-12 h-12" />
+          <p className="font-bold text-blue-600 dark:text-blue-400 mt-4">
+            AI sedang memproses...
+          </p>
         </div>
       )}
 
-      {/* Input File Tersembunyi */}
+      {/* INPUT FILE CAMERA TERSEMBUNYI */}
       <input
         type="file"
         accept="image/*"
@@ -512,7 +190,7 @@ const Dashboard = () => {
         onChange={handleFileChange}
       />
 
-      {/* Sidebar */}
+      {/* KOMPONEN SIDEBAR */}
       <Sidebar
         userData={userData}
         activeTab={activeTab}
@@ -520,27 +198,29 @@ const Dashboard = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
         handleLogout={handleLogout}
-        setShowPemasukanModal={setShowPemasukanModal}
+        onTambahPemasukan={() => setShowPemasukanModal(true)}
+        onTambahPengeluaran={() => setShowPengeluaranModal(true)}
         handleCameraClick={() => fileInputRef.current.click()}
         handleVoiceRecord={handleVoiceRecord}
         isListening={isListening}
         isSidebarCollapsed={isSidebarCollapsed}
         setIsSidebarCollapsed={setIsSidebarCollapsed}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        onOpenKemampuan={() => setShowKemampuanModal(true)}
       />
 
-      {/* 3. KONTEN UTAMA */}
-      {/* pt-20 di mobile untuk memberi jarak agar tidak tertutup header mobile */}
+      {/* KONTEN UTAMA */}
       <main className="flex-1 overflow-y-auto relative pt-24 lg:pt-0 custom-scrollbar">
-        <div className="p-4 sm:p-6 lg:p-12 max-w-7xl mx-auto ">
+        <div className="p-4 sm:p-6 lg:p-12 max-w-7xl mx-auto">
           {activeTab === "dashboard" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-              {/* --- HEADER SAPAAN & TANGGAL --- */}
+              {/* HEADER WAKTU & SAPAAN */}
               <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
-                {/* Bagian Kiri: Teks Sapaan */}
                 <div>
-                  <h2 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                  <h2 className="text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3 transition-colors duration-300">
                     Halo,{" "}
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
                       {
                         (
                           userData?.namaLengkap ||
@@ -554,28 +234,26 @@ const Dashboard = () => {
                       👋
                     </span>
                   </h2>
-                  <p className="text-slate-500 mt-3 font-medium flex items-center gap-2.5 w-fit bg-white px-4 py-2 rounded-full border border-slate-200/60 shadow-sm">
+                  <p className="text-slate-500 dark:text-slate-400 mt-3 font-medium flex items-center gap-2.5 w-fit bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200/60 dark:border-slate-700 shadow-sm transition-colors duration-300">
                     <span className="text-sm">
                       {getGreeting()}, ini ringkasan keuanganmu.
                     </span>
                   </p>
                 </div>
 
-                {/* Bagian Kanan: Filter Waktu & Badge Tanggal */}
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-                  {/* --- DROPDOWN FILTER WAKTU --- */}
                   <div className="relative group w-full sm:w-auto">
                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                       <ChevronDown
                         size={18}
-                        className="text-slate-400 group-hover:text-blue-500 transition-colors"
+                        className="text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors"
                         strokeWidth={3}
                       />
                     </div>
                     <select
                       value={filterWaktu}
                       onChange={(e) => setFilterWaktu(e.target.value)}
-                      className="w-full sm:w-auto bg-white hover:bg-slate-50 px-5 py-3.5 pr-12 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all text-sm font-bold text-slate-700 outline-none cursor-pointer appearance-none"
+                      className="w-full sm:w-auto bg-white dark:bg-slate-800 px-5 py-3.5 pr-12 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all focus:ring-0 text-sm font-bold text-slate-700 dark:text-white outline-none cursor-pointer appearance-none"
                     >
                       <option value="hari_ini">Hari Ini</option>
                       <option value="minggu_ini">Minggu Ini</option>
@@ -584,53 +262,46 @@ const Dashboard = () => {
                     </select>
                   </div>
 
-                  {/* Badge Tanggal */}
-                  <div className="hidden lg:flex items-center gap-4 bg-white px-5 py-3.5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-default group">
-                    <div className="bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 p-2.5 rounded-xl group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 shadow-inner">
+                  <div className="hidden lg:flex items-center gap-4 bg-white dark:bg-slate-800 px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all cursor-default group">
+                    <div className="bg-gradient-to-tr from-blue-100 to-indigo-50 dark:from-blue-100 text-blue-600 dark:text-blue-600 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
                       <Calendar size={20} strokeWidth={2.5} />
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-0.5">
-                        Hari Ini
+                    <div className="text-right transition-colors duration-300">
+                      <p className="text-[10px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] mb-0.5">
+                        {getFilterLabel()}
                       </p>
-                      <p className="text-sm font-bold text-slate-700 group-hover:text-blue-700 transition-colors">
-                        {new Date().toLocaleDateString("id-ID", {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                        })}
+                      <p className="text-sm font-bold text-slate-700 dark:text-white transition-colors">
+                        {getFilterDateText()}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* CARD RINGKASAN */}
               <BalanceCard
                 totalPemasukan={totalPemasukan}
                 totalPengeluaran={totalPengeluaran}
               />
 
-              <div className="mt-12">
-                <TransactionList
-                  riwayatTransaksi={riwayatTransaksi}
-                  ikonKategori={ikonKategori}
-                  handleBukaEdit={(i) => {
-                    setFormEdit({
-                      id: i.id,
-                      tipe: i.tipe,
-                      judul: i.judul,
-                      nominal: i.nominal.toLocaleString("id-ID"),
-                      kategori:
-                        i.kategori ||
-                        (i.tipe === "pemasukan" ? "Lainnya" : "Lainnya"),
-                    });
-                    setShowEditModal(true);
-                  }}
-                  handleHapusTransaksi={handleHapusTransaksi}
-                  onTambahPemasukan={() => setShowPemasukanModal(true)}
-                  onTambahPengeluaran={() => setShowPengeluaranModal(true)}
-                />
-              </div>
+              {/* LIST TRANSAKSI */}
+              <TransactionList
+                riwayatTransaksi={riwayatTransaksi}
+                isLoading={isLoading}
+                handleHapusTransaksi={handleHapusTransaksi}
+                onTambahPemasukan={() => setShowPemasukanModal(true)}
+                onTambahPengeluaran={() => setShowPengeluaranModal(true)}
+                handleBukaEdit={(transaksi) => {
+                  setFormEdit({
+                    id: transaksi.id,
+                    tipe: transaksi.tipe,
+                    judul: transaksi.judul || transaksi.toko,
+                    nominal: transaksi.nominal || transaksi.total,
+                    kategori: transaksi.kategori || "Lainnya",
+                  });
+                  setShowEditModal(true);
+                }}
+              />
             </div>
           ) : (
             <StatistikView
@@ -639,19 +310,24 @@ const Dashboard = () => {
               setFilterWaktu={setFilterWaktu}
             />
           )}
+
+          {/* WATERMARK FOOTER */}
+          <div className="mt-12 mb-6 text-center">
+            <p className="text-sm font-bold text-slate-400 dark:text-slate-600">
+              Finance Smart © 2026
+            </p>
+          </div>
         </div>
       </main>
 
-      {/* --- KUMPULAN MODAL (Taruh di sini satu-satu, jangan duplikat) --- */}
-      {/* 1. Modal Tambah Pemasukan */}
+      {/* SEMUA MODALS */}
       <PemasukanModal
         show={showPemasukanModal}
         onClose={() => setShowPemasukanModal(false)}
         form={formPemasukan}
         setForm={setFormPemasukan}
-        onSubmit={handleSimpanPemasukan} // <-- Pastikan pakai handleSimpanPemasukan
+        onSubmit={handleSimpanPemasukan}
       />
-
       <PengeluaranModal
         show={showPengeluaranModal}
         onClose={() => setShowPengeluaranModal(false)}
@@ -659,21 +335,24 @@ const Dashboard = () => {
         setForm={setFormPengeluaran}
         onSubmit={handleSimpanPengeluaranManual}
       />
-
-      {/* 2. Modal Edit Transaksi */}
       <EditModal
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
         form={formEdit}
         setForm={setFormEdit}
-        onSubmit={handleSimpanEdit} // <-- Ini yang akan memproses update
+        onSubmit={handleSimpanEdit}
       />
-
-      {/* 3. Modal Hasil Scan */}
       <ScanResultModal
         data={scannedData}
         onClose={() => setScannedData(null)}
-        onSave={handleSimpanPengeluaran} // <-- Tambahkan ini agar struk bisa disimpan
+        onSave={handleSimpanPengeluaranScan}
+      />
+      <KemampuanBeliModal
+        show={showKemampuanModal}
+        onClose={() => setShowKemampuanModal(false)}
+        userId={userData?.id}
+        saldo={totalPemasukan - totalPengeluaran}
+        rataPengeluaran={totalPengeluaran}
       />
     </div>
   );

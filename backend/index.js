@@ -241,16 +241,16 @@ app.post("/api/login", async (req, res) => {
     const hasBiometric = userPasskeys.length > 0; // true kalau sudah ada, false kalau belum
 
     // Kirim token dan data user (kecuali password) ke frontend
-      res.json({
-        message: "Login berhasil",
-        token,
-        user: {
-          id: user.id,
-          namaLengkap: user.namaLengkap,
-          email: user.email,
-          hasBiometric: hasBiometric,
-        },
-      });
+    res.json({
+      message: "Login berhasil",
+      token,
+      user: {
+        id: user.id,
+        namaLengkap: user.namaLengkap,
+        email: user.email,
+        hasBiometric: hasBiometric,
+      },
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Terjadi kesalahan di server." });
@@ -635,10 +635,15 @@ app.post("/api/voice", async (req, res) => {
     }
 
     const responseText = dataAI.choices[0].message.content;
-    const cleanJson = responseText
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+    // PERBAIKAN: Cari karakter '[' pertama dan ']' terakhir untuk memotong teks sampah dari AI
+    const firstBracket = responseText.indexOf("[");
+    const lastBracket = responseText.lastIndexOf("]");
+
+    if (firstBracket === -1 || lastBracket === -1) {
+      throw new Error("AI tidak memberikan format JSON yang valid");
+    }
+
+    const cleanJson = responseText.substring(firstBracket, lastBracket + 1);
     const data = JSON.parse(cleanJson);
 
     // Amankan bentuk data apakah JSON Object atau Array
@@ -680,6 +685,77 @@ app.post("/api/voice", async (req, res) => {
   } catch (error) {
     console.error("Error voice command:", error);
     res.status(500).json({ message: "Gagal memproses suara." });
+  }
+});
+
+// --- ENDPOINT: CEK KEMAMPUAN BELI (ASISTEN AI) ---
+app.post("/api/kemampuan-beli", async (req, res) => {
+  try {
+    const { userId, text, saldo, rataPengeluaran } = req.body;
+
+    const prompt = `
+      Saya adalah pengguna yang ingin membeli atau melakukan pengeluaran untuk sesuatu.
+      Mata uang: Rupiah (Rp).
+      Kondisi keuangan saya saat ini:
+      - Saldo Tersisa: Rp ${saldo}
+      - Rata-rata Pengeluaran Bulanan: Rp ${rataPengeluaran}
+      
+      Pertanyaan / Keinginan saya: "${text}"
+      
+      Tugas kamu sebagai Asisten Perencana Keuangan yang pintar, realistis, namun tetap memotivasi:
+      1. Berikan analisa finansial, apakah dengan sisa saldo saya saat ini, keputusan tersebut masuk akal/rasional atau uangnya kurang?
+      2. Berikan saran atau motivasi (misal: "Lebih baik ditabung dulu bulan ini" atau "Wah asik, saldomu cukup kok!").
+      
+      Kembalikan HANYA format JSON (tanpa markdown backticks, tanpa kata pembuka). Harus persis format ini:
+      {
+        "status": "bisa", // hanya isi dengan teks "bisa" atau "tidak" (karena akan dipakai untuk warna UI hijau/merah)
+        "pesan": "analisa dan saran kamu sepanjang 2-3 kalimat yang ramah dan memotivasi di sini"
+      }
+    `;
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:5173",
+          "X-Title": "Finance Smart",
+        },
+        body: JSON.stringify({
+          model: "google/gemma-3-27b-it", // Bisa juga pakai model fallback jika ini gagal
+          max_tokens: 500,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      },
+    );
+
+    const dataAI = await response.json();
+
+    if (dataAI.error) {
+      console.error("OpenRouter Error (Kemampuan Beli):", dataAI.error);
+      return res.status(500).json({ message: "OpenRouter Error", detail: dataAI.error });
+    }
+
+    const responseText = dataAI.choices[0].message.content;
+    const firstBracket = responseText.indexOf("{");
+    const lastBracket = responseText.lastIndexOf("}");
+
+    if (firstBracket === -1 || lastBracket === -1) {
+      throw new Error("AI tidak memberikan format JSON yang valid");
+    }
+
+    const cleanJson = responseText.substring(firstBracket, lastBracket + 1);
+    const result = JSON.parse(cleanJson);
+
+    res.status(200).json({
+      message: "Analisa berhasil didapatkan",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error cek kemampuan beli:", error);
+    res.status(500).json({ message: "Gagal memproses analisa Asisten AI." });
   }
 });
 
