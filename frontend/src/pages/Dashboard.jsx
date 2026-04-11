@@ -54,6 +54,42 @@ const Dashboard = () => {
     setUserData(JSON.parse(user));
   }, [navigate]);
 
+  // Efek Intercept Tombol Back (Kembali) di Browser / HP
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) return; // Jangan trap jika memang belum login
+
+    // Menyuntikkan history palsu (dummy state)
+    // agar tombol back tidak langsung membuang user dari halaman.
+    window.history.pushState(null, null, window.location.pathname);
+
+    const handlePopState = async () => {
+      const konfirmasi = await Swal.fire({
+        title: "Yakin ingin keluar?",
+        text: "Sesi kamu saat ini akan diakhiri.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#94a3b8",
+        confirmButtonText: "Ya, Keluar!",
+        cancelButtonText: "Batal",
+      });
+
+      if (konfirmasi.isConfirmed) {
+        localStorage.clear();
+        navigate("/login");
+      } else {
+        // Jika batal keluar, suntikkan lagi state palsu agar jebakan back-nya aktif lagi
+        window.history.pushState(null, null, window.location.pathname);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [navigate]);
+
   // Ekstraksi Logika Bisnis Lewat Custom Hooks
   const {
     rawPemasukan,
