@@ -113,9 +113,9 @@ const TransactionList = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full xl:w-auto shrink-0">
+        <div className="grid grid-cols-2 xl:flex xl:flex-row items-center gap-3 w-full xl:w-auto shrink-0">
           {/* --- SELECTOR KATEGORI (DROPDOWN) --- */}
-          <div className="relative group w-full xl:flex-1 max-w-xs">
+          <div className="relative group col-span-2 order-3 xl:order-1 w-full xl:w-auto xl:flex-1 max-w-none xl:max-w-xs">
             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
               <ChevronDown
                 size={18}
@@ -143,25 +143,25 @@ const TransactionList = ({
           {/* Tombol Pemasukan */}
           <button
             onClick={onTambahPemasukan}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white px-5 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 border border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-500 group shadow-sm active:scale-95"
+            className="order-1 xl:order-2 col-span-1 w-full xl:w-auto xl:flex-none flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white px-5 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 border border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-500 group shadow-sm active:scale-95"
           >
             <Plus
-              className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300"
+              className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300 shrink-0"
               strokeWidth={3}
             />
-            <span>Pemasukan</span>
+            <span className="truncate">Pemasukan</span>
           </button>
 
           {/* Tombol Pengeluaran */}
           <button
             onClick={onTambahPengeluaran}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white px-5 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 border border-rose-100 dark:border-rose-500/20 hover:border-rose-500 group shadow-sm active:scale-95"
+            className="order-2 xl:order-3 col-span-1 w-full xl:w-auto xl:flex-none flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white px-5 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 border border-rose-100 dark:border-rose-500/20 hover:border-rose-500 group shadow-sm active:scale-95"
           >
             <Minus
-              className="w-5 h-5 group-hover:-rotate-90 transition-transform duration-300"
+              className="w-5 h-5 group-hover:-rotate-90 transition-transform duration-300 shrink-0"
               strokeWidth={3}
             />
-            <span>Pengeluaran</span>
+            <span className="truncate">Pengeluaran</span>
           </button>
         </div>
       </div>
