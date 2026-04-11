@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { Loader2, Menu, Wallet, Calendar, ChevronDown } from "lucide-react";
+import Swal from "sweetalert2";
 
 // Komponen Tampilan
 import Sidebar from "../components/dashboard/Sidebar";
@@ -96,9 +97,22 @@ const Dashboard = () => {
   } = useSmartFeatures(userData, fetchSemuaData);
 
   // === UI Helpers ===
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+  const handleLogout = async () => {
+    const konfirmasi = await Swal.fire({
+      title: "Yakin ingin keluar?",
+      text: "Sesi kamu saat ini akan diakhiri.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Ya, Keluar!",
+      cancelButtonText: "Batal"
+    });
+
+    if (konfirmasi.isConfirmed) {
+      localStorage.clear();
+      navigate("/login");
+    }
   };
 
   const getGreeting = () => {

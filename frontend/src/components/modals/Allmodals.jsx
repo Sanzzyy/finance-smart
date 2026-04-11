@@ -406,79 +406,79 @@ export const KemampuanBeliModal = ({ show, onClose, userId, saldo, rataPengeluar
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-700 flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Tombol Close Tetap (Fixed) */}
+      <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-700">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition z-10 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md"
+          className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition"
         >
           <X size={24} className="text-slate-400" />
         </button>
 
-        <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30 shrink-0">
-              <Bot size={28} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Cek Kemampuan Beli</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">AI Financial Planner</p>
-            </div>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30 shrink-0">
+            <Bot size={28} className="text-white" />
           </div>
-
-          {/* INFO SALDO CURRENT */}
-          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 mb-6 gap-2">
-            <div className="flex flex-col w-1/2">
-              <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Saldo Saat Ini</span>
-              <span className="font-bold text-slate-700 dark:text-slate-200 truncate">Rp {saldo?.toLocaleString("id-ID")}</span>
-            </div>
-            <div className="flex flex-col text-right w-1/2">
-              <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Rata Pengeluaran</span>
-              <span className="font-bold text-slate-700 dark:text-slate-200 truncate">Rp {rataPengeluaran?.toLocaleString("id-ID")}</span>
-            </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Cek Kemampuan Beli</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">AI Financial Planner</p>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="relative mb-6">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Tanya AI: 'Gua mau beli RAM 700ribu bulan depan bisa gak?'"
-              className="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl px-5 py-4 pb-14 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-sm font-medium text-slate-700 dark:text-white resize-none"
-              rows="3"
-            />
-            <div className="absolute bottom-3 right-3 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleVoiceRecord}
-                className={`p-2.5 rounded-xl transition-all ${isListening ? "bg-red-100 text-red-500 animate-pulse" : "bg-white dark:bg-slate-600 text-slate-400 hover:text-indigo-500 shadow-sm border border-slate-100 dark:border-slate-500"}`}
-                title="Rekam Suara"
-              >
-                <Mic size={18} />
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !text.trim()}
-                className="p-2.5 bg-indigo-500 text-white rounded-xl shadow-md hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-              </button>
+        {/* INFO SALDO CURRENT */}
+        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 mb-6 gap-2">
+          <div className="flex flex-col w-1/2">
+            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Saldo Saat Ini</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200 truncate">Rp {saldo?.toLocaleString("id-ID")}</span>
+          </div>
+          <div className="flex flex-col text-right w-1/2">
+            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Rata Pengeluaran</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200 truncate">Rp {rataPengeluaran?.toLocaleString("id-ID")}</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="relative mb-6">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Tanya AI: 'Gua mau beli RAM 700ribu bulan depan bisa gak?'"
+            className="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl px-5 py-4 pb-14 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all text-sm font-medium text-slate-700 dark:text-white resize-none"
+            rows="3"
+          />
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleVoiceRecord}
+              className={`p-2.5 rounded-xl transition-all ${isListening ? "bg-red-100 text-red-500 animate-pulse" : "bg-white dark:bg-slate-600 text-slate-400 hover:text-indigo-500 shadow-sm border border-slate-100 dark:border-slate-500"}`}
+              title="Rekam Suara"
+            >
+              <Mic size={18} />
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !text.trim()}
+              className="p-2.5 bg-indigo-500 text-white rounded-xl shadow-md hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            </button>
+          </div>
+        </form>
+
+        {/* HASIL / JAWABAN AI */}
+        {result && (
+          <div className={`p-4 rounded-2xl border animate-in slide-in-from-bottom-4 duration-300 ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30"}`}>
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"}`}>
+                {result.status?.toUpperCase() || "INFO"}
+              </span>
             </div>
-          </form>
-
-          {/* HASIL / JAWABAN AI */}
-          {result && (
-            <div className={`p-5 rounded-2xl border animate-in slide-in-from-bottom-4 duration-300 ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30"}`}>
-              <div className="flex items-center gap-3 mb-3">
-                <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"}`}>
-                  {result.status?.toUpperCase() || "INFO"}
-                </span>
-              </div>
-              <div className="text-sm font-medium leading-relaxed dark:text-slate-200 text-slate-700 whitespace-pre-wrap">
+            {/* Scroll HANYA disini */}
+            <div className="max-h-[160px] overflow-y-auto custom-scrollbar pr-2 pb-1">
+              <div className="text-[13px] font-medium leading-relaxed dark:text-slate-200 text-slate-700 whitespace-pre-wrap">
                 {result.pesan}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
