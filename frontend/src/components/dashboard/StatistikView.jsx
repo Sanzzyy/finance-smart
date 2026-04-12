@@ -23,6 +23,7 @@ import {
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useLanguage } from "../../context/LanguageContext";
 
 const COLORS = [
   "#3b82f6", // Blue
@@ -38,6 +39,7 @@ const COLORS = [
 ];
 
 const StatistikView = ({ riwayatTransaksi, filterWaktu, setFilterWaktu }) => {
+  const { t } = useLanguage();
   // 1. LOGIKA UNTUK PIE CHART & KATEGORI
   const dataPengeluaran = riwayatTransaksi.filter(
     (t) => t.tipe === "pengeluaran",
@@ -185,10 +187,10 @@ const StatistikView = ({ riwayatTransaksi, filterWaktu, setFilterWaktu }) => {
       <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3 transition-colors duration-300">
-            Analisis Pengeluaran
+            {t("stats.expense_title")}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            Wawasan cerdas untuk mengatur alokasi danamu.
+            {t("stats.expense_desc")}
           </p>
         </div>
 

@@ -9,8 +9,10 @@ import {
   startAuthentication,
 } from "@simplewebauthn/browser";
 import Swal from "sweetalert2";
+import { useLanguage } from "../context/LanguageContext";
 
 const Login = () => {
+  const { t } = useLanguage();
   const formRef = useRef(null);
   const navigate = useNavigate();
 
@@ -209,17 +211,17 @@ const Login = () => {
             <Sparkles className="text-[#1a73e8] dark:text-blue-400 w-8 h-8 -rotate-3" />
           </div>
           <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-2">
-            Selamat Datang
+            {t("auth.welcome")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-            Masuk untuk mendominasi keuanganmu.
+            {t("auth.subtitle_login")}
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-1.5">
             <label className="block text-slate-700 dark:text-slate-300 text-sm font-bold ml-1">
-              Username / Email
+              {t("auth.username_email")}
             </label>
             <input
               type="text"
@@ -228,13 +230,13 @@ const Login = () => {
               onChange={handleChange}
               required
               className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-400 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
-              placeholder="Masukkan email kamu"
+              placeholder={t("auth.placeholder_email")}
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-slate-700 dark:text-slate-300 text-sm font-bold ml-1">
-              Password
+              {t("auth.password")}
             </label>
             <input
               type="password"
@@ -254,24 +256,23 @@ const Login = () => {
           >
             {isLoading ? (
               <>
-                <Loader2 className="animate-spin" size={20} /> Memproses
-                Otorisasi...
+                <Loader2 className="animate-spin" size={20} /> {t("auth.processing")}
               </>
             ) : (
               <>
-                Masuk Sekarang <ArrowRight size={20} />
+                {t("auth.btn_login")} <ArrowRight size={20} />
               </>
             )}
           </button>
         </form>
 
         <p className="text-center mt-10 text-slate-500 dark:text-slate-400 text-sm font-medium">
-          Pengguna baru?{" "}
+          {t("auth.new_user")}{" "}
           <Link
             to="/register"
             className="text-blue-600 dark:text-blue-400 font-bold hover:underline underline-offset-4"
           >
-            Daftar di sini
+            {t("auth.register_here")}
           </Link>
         </p>
       </div>

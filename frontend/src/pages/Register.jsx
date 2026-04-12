@@ -5,8 +5,10 @@ import { ArrowLeft, Sparkles, Loader2, Sun, Moon } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axiosInstance";
 import Swal from "sweetalert2";
+import { useLanguage } from "../context/LanguageContext";
 
 const Register = () => {
+  const { t } = useLanguage();
   const formRef = useRef(null);
   const navigate = useNavigate();
 
@@ -108,17 +110,17 @@ const Register = () => {
           </div>
 
           <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-2">
-            Mulai Perjalanan
+            {t("auth.start_journey")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-            Buat akun dan atur keuangan yang lebih cerdas.
+            {t("auth.subtitle_register")}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1.5">
             <label className="block text-slate-700 dark:text-slate-300 text-sm font-bold ml-1">
-              Nama Lengkap
+              {t("auth.fullname")}
             </label>
             <input
               type="text"
@@ -127,7 +129,7 @@ const Register = () => {
               onChange={handleChange}
               required
               className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-500 dark:focus:border-blue-400 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
-              placeholder="Contoh: Muhammad Sajid"
+              placeholder={t("auth.placeholder_fullname")}
             />
           </div>
 
@@ -148,7 +150,7 @@ const Register = () => {
 
           <div className="space-y-1.5">
             <label className="block text-slate-700 dark:text-slate-300 text-sm font-bold ml-1">
-              Password
+              {t("auth.password")}
             </label>
             <input
               type="password"
@@ -168,10 +170,10 @@ const Register = () => {
           >
             {isLoading ? (
               <>
-                <Loader2 className="animate-spin" size={20} /> Memproses Pendaftaran...
+                <Loader2 className="animate-spin" size={20} /> {t("auth.processing_register")}
               </>
             ) : (
-              "Daftar Sekarang"
+              t("auth.btn_register")
             )}
           </button>
         </form>
@@ -181,7 +183,7 @@ const Register = () => {
             to="/login"
             className="text-slate-500 dark:text-slate-400 text-sm hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center gap-2 transition-colors font-semibold"
           >
-            <ArrowLeft size={16} /> Sudah punya akun? Login
+            <ArrowLeft size={16} /> {t("auth.have_account")}
           </Link>
         </div>
       </div>

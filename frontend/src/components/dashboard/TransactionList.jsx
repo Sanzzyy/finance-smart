@@ -22,6 +22,7 @@ import {
   Search,
   ChevronDown,
 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const TransactionList = ({
   riwayatTransaksi,
@@ -31,6 +32,7 @@ const TransactionList = ({
   onTambahPemasukan,
   onTambahPengeluaran,
 }) => {
+  const { t } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("semua");
   const itemsPerPage = 5;
@@ -106,10 +108,10 @@ const TransactionList = ({
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-10 gap-8 border-b border-slate-50 dark:border-slate-700 pb-8">
         <div className="w-full xl:w-auto">
           <h3 className="text-slate-800 dark:text-white font-black text-2xl tracking-tight">
-            Riwayat Transaksi
+            {t("transactions.history")}
           </h3>
           <p className="text-slate-400 dark:text-slate-500 text-sm mt-1 font-medium pb-4 xl:pb-0">
-            Daftar aktivitas keuangan terbarumu
+            {t("transactions.history_desc")}
           </p>
         </div>
 
@@ -149,7 +151,7 @@ const TransactionList = ({
               className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300 shrink-0"
               strokeWidth={3}
             />
-            <span className="truncate">Pemasukan</span>
+            <span className="truncate">{t("transactions.btn_income")}</span>
           </button>
 
           {/* Tombol Pengeluaran */}
@@ -161,7 +163,7 @@ const TransactionList = ({
               className="w-5 h-5 group-hover:-rotate-90 transition-transform duration-300 shrink-0"
               strokeWidth={3}
             />
-            <span className="truncate">Pengeluaran</span>
+            <span className="truncate">{t("transactions.btn_expense")}</span>
           </button>
         </div>
       </div>
@@ -179,15 +181,15 @@ const TransactionList = ({
             </div>
             <p className="text-slate-400 dark:text-slate-500 font-bold text-lg">
               {selectedCategory !== "semua"
-                ? `Tidak ada transaksi di kategori ${selectedCategory}`
-                : "Belum ada transaksi"}
+                ? t("transactions.no_transaction_cat", { cat: selectedCategory })
+                : t("transactions.no_transaction")}
             </p>
             {selectedCategory !== "semua" && (
               <button
                 onClick={() => setSelectedCategory("semua")}
                 className="mt-4 text-blue-500 dark:text-blue-400 font-bold text-sm hover:underline"
               >
-                Tampilkan semua kategori
+                {t("transactions.show_all")}
               </button>
             )}
           </div>

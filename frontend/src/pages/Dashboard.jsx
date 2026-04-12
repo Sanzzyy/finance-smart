@@ -21,9 +21,11 @@ import {
 import { useDashboardData } from "../hooks/useDashboardData";
 import { useTransactions } from "../hooks/useTransactions";
 import { useSmartFeatures } from "../hooks/useSmartFeatures";
+import { useLanguage } from "../context/LanguageContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const fileInputRef = useRef(null);
 
   // Layout & UI States
@@ -65,14 +67,14 @@ const Dashboard = () => {
 
     const handlePopState = async () => {
       const konfirmasi = await Swal.fire({
-        title: "Yakin ingin keluar?",
-        text: "Sesi kamu saat ini akan diakhiri.",
+        title: t("dashboard.logout_confirm_title"),
+        text: t("dashboard.logout_confirm_text"),
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#ef4444",
         cancelButtonColor: "#94a3b8",
-        confirmButtonText: "Ya, Keluar!",
-        cancelButtonText: "Batal",
+        confirmButtonText: t("dashboard.btn_yes_logout"),
+        cancelButtonText: t("dashboard.btn_cancel"),
       });
 
       if (konfirmasi.isConfirmed) {
@@ -88,7 +90,7 @@ const Dashboard = () => {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [navigate]);
+  }, [navigate, t]);
 
   // Ekstraksi Logika Bisnis Lewat Custom Hooks
   const {
@@ -135,14 +137,14 @@ const Dashboard = () => {
   // === UI Helpers ===
   const handleLogout = async () => {
     const konfirmasi = await Swal.fire({
-      title: "Yakin ingin keluar?",
-      text: "Sesi kamu saat ini akan diakhiri.",
+      title: t("dashboard.logout_confirm_title"),
+      text: t("dashboard.logout_confirm_text"),
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Ya, Keluar!",
-      cancelButtonText: "Batal"
+      confirmButtonText: t("dashboard.btn_yes_logout"),
+      cancelButtonText: t("dashboard.btn_cancel"),
     });
 
     if (konfirmasi.isConfirmed) {
@@ -153,24 +155,24 @@ const Dashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Selamat Pagi";
-    if (hour < 15) return "Selamat Siang";
-    if (hour < 18) return "Selamat Sore";
-    return "Selamat Malam";
+    if (hour < 12) return t("dashboard.good_morning");
+    if (hour < 15) return t("dashboard.good_afternoon");
+    if (hour < 18) return t("dashboard.good_evening");
+    return t("dashboard.good_night");
   };
 
   const getFilterLabel = () => {
     switch (filterWaktu) {
       case "hari_ini":
-        return "Hari Ini";
+        return t("dashboard.today");
       case "minggu_ini":
-        return "Minggu Ini";
+        return t("dashboard.this_week");
       case "bulan_ini":
-        return "Bulan Ini";
-      case "semua":
-        return "Semua Waktu";
+        return t("dashboard.this_month");
+      case "tahun_ini":
+        return t("dashboard.this_year");
       default:
-        return "Hari Ini";
+        return t("dashboard.this_month");
     }
   };
 
@@ -196,7 +198,7 @@ const Dashboard = () => {
         year: "numeric",
       });
     }
-    return "Semua Histori";
+    return t("dashboard.all_history");
   };
 
   if (!userData) return null;
@@ -269,7 +271,7 @@ const Dashboard = () => {
               <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
                 <div>
                   <h2 className="text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3 transition-colors duration-300">
-                    Halo,{" "}
+                    {getGreeting()},{" "}
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
                       {
                         (
@@ -286,7 +288,7 @@ const Dashboard = () => {
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 mt-3 font-medium flex items-center gap-2.5 w-fit bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200/60 dark:border-slate-700 shadow-sm transition-colors duration-300">
                     <span className="text-sm">
-                      {getGreeting()}, ini ringkasan keuanganmu.
+                      {t("dashboard.summary_title")}
                     </span>
                   </p>
                 </div>
@@ -305,10 +307,10 @@ const Dashboard = () => {
                       onChange={(e) => setFilterWaktu(e.target.value)}
                       className="w-full sm:w-auto bg-white dark:bg-slate-800 px-5 py-3.5 pr-12 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all focus:ring-0 text-sm font-bold text-slate-700 dark:text-white outline-none cursor-pointer appearance-none"
                     >
-                      <option value="hari_ini">Hari Ini</option>
-                      <option value="minggu_ini">Minggu Ini</option>
-                      <option value="bulan_ini">Bulan Ini</option>
-                      <option value="semua">Semua Waktu</option>
+                      <option value="hari_ini">{t("dashboard.today")}</option>
+                      <option value="minggu_ini">{t("dashboard.this_week")}</option>
+                      <option value="bulan_ini">{t("dashboard.this_month")}</option>
+                      <option value="semua">{t("dashboard.all_time")}</option>
                     </select>
                   </div>
 

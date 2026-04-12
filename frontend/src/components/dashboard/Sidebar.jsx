@@ -12,7 +12,9 @@ import {
   Sun,
   Moon,
   Bot,
+  Globe,
 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const Sidebar = ({
   userData,
@@ -30,6 +32,7 @@ const Sidebar = ({
   setIsDarkMode,
   onOpenKemampuan,
 }) => {
+  const { t, language, setLanguage } = useLanguage();
   const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
 
   React.useEffect(() => {
@@ -103,12 +106,13 @@ const Sidebar = ({
           </button>
         </div>
 
-        {/* --- PROFIL USER & TEMA --- */}
+        {/* --- PROFIL USER & UTILITIES --- */}
         <div
-          className={`py-6 shrink-0 ${collapsed ? "px-3" : "px-5"}`}
+          className={`py-5 shrink-0 flex flex-col gap-2 ${collapsed ? "px-3" : "px-5"}`}
         >
+          {/* Kotak Profil */}
           <div
-            className={`bg-white/10 border border-white/20 backdrop-blur-sm flex transition-all cursor-default ${collapsed ? "p-2.5 flex-col items-center gap-3 rounded-[1.25rem]" : "p-3 pl-4 items-center justify-between rounded-2xl"}`}
+            className={`bg-white/10 border border-white/20 backdrop-blur-sm flex transition-all cursor-default ${collapsed ? "p-2 justify-center rounded-2xl" : "p-3 pl-4 items-center gap-3 rounded-2xl"}`}
           >
             <div className={`flex items-center min-w-0 ${collapsed ? "justify-center" : "gap-3 w-full"}`}>
               <div className="w-10 h-10 bg-white text-[#1a73e8] font-black text-base rounded-xl flex items-center justify-center shrink-0 shadow-sm">
@@ -125,130 +129,113 @@ const Sidebar = ({
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Tombol Tema Simple */}
+          {/* Kotak Utilities (Tema & Bahasa) */}
+          <div className={`flex items-center gap-2 ${collapsed ? "flex-col" : "flex-row w-full"}`}>
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              title={
-                isDarkMode ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"
-              }
-              className={`flex items-center justify-center rounded-xl transition-all border border-transparent hover:bg-white/20 shrink-0
-                ${collapsed ? "w-10 h-10 bg-white/5 hover:bg-white/10" : "w-10 h-10 ml-2"}
-              `}
+              title={isDarkMode ? t("sidebar.mode_light") : t("sidebar.mode_dark")}
+              className={`flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all shadow-sm ${collapsed ? "p-2 w-full" : "p-2 text-white"}`}
             >
               {isDarkMode ? (
-                <Sun
-                  size={18}
-                  className="text-yellow-300 drop-shadow-md transition-transform hover:rotate-90"
-                />
+                <Sun size={15} className="text-yellow-300 shrink-0" strokeWidth={2.5} />
               ) : (
-                <Moon
-                  size={18}
-                  className="text-indigo-200 drop-shadow-md transition-transform hover:-rotate-12"
-                />
+                <Moon size={15} className="text-indigo-200 shrink-0" strokeWidth={2.5} />
               )}
+              {!collapsed && <span className="text-xs font-bold">{isDarkMode ? t("sidebar.mode_light") : t("sidebar.mode_dark")}</span>}
+            </button>
+
+            <button
+              onClick={() => setLanguage(language === "ID" ? "EN" : "ID")}
+              title="Change Language"
+              className={`flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all shadow-sm ${collapsed ? "p-2 w-full" : "p-2 text-white"}`}
+            >
+              <Globe size={15} className="text-sky-200 shrink-0" strokeWidth={2.5} />
+              {!collapsed && <span className="text-xs font-bold">{language}</span>}
             </button>
           </div>
         </div>
 
         {/* --- MENU NAVIGASI --- */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
-          {!collapsed ? (
-            <p className="px-3 text-[10px] font-black text-blue-200 uppercase tracking-[0.2em] mb-3 mt-2 opacity-80">
-              Utama
-            </p>
-          ) : (
-            <div className="h-[1px] w-8 bg-white/20 mx-auto mb-3 mt-4"></div>
-          )}
-
+        <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-4 space-y-1.5 mt-2">
+          <p
+            className={`text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 px-3 
+            ${collapsed ? "text-center hidden lg:block text-[8px]" : ""}`}
+          >
+            {t("sidebar.main")}
+          </p>
           <button
             onClick={() => {
               setActiveTab("dashboard");
-              setIsMobileMenuOpen(false);
+              if (!isDesktop) setIsMobileMenuOpen(false);
             }}
-            title="Dashboard"
-            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all group
+            className={`w-full flex items-center rounded-xl text-sm font-bold transition-all relative group
               ${collapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5"}
-              ${activeTab === "dashboard" ? "bg-white/20 text-white shadow-sm border border-white/10" : "text-blue-100 hover:bg-white/10 hover:text-white"}
+              ${activeTab === "dashboard" ? "bg-white text-[#1a73e8] shadow-md" : "text-white/80 hover:bg-white/10 hover:text-white"}
             `}
           >
             <LayoutDashboard
               size={20}
-              className={
-                activeTab === "dashboard"
-                  ? "text-white"
-                  : "text-blue-200 group-hover:text-white shrink-0"
-              }
+              strokeWidth={activeTab === "dashboard" ? 3 : 2}
+              className={collapsed ? "" : "shrink-0"}
             />
-            {!collapsed && <span>Dashboard</span>}
+            {!collapsed && <span>{t("sidebar.dashboard")}</span>}
           </button>
 
           <button
             onClick={() => {
               setActiveTab("statistik");
-              setIsMobileMenuOpen(false);
+              if (!isDesktop) setIsMobileMenuOpen(false);
             }}
-            title="Statistik & Kategori"
-            className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all group
+            className={`w-full flex items-center rounded-xl text-sm font-bold transition-all relative group
               ${collapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5"}
-              ${activeTab === "statistik" ? "bg-white/20 text-white shadow-sm border border-white/10" : "text-blue-100 hover:bg-white/10 hover:text-white"}
+              ${activeTab === "statistik" ? "bg-white text-[#1a73e8] shadow-md" : "text-white/80 hover:bg-white/10 hover:text-white"}
             `}
           >
             <PieChartIcon
               size={20}
-              className={
-                activeTab === "statistik"
-                  ? "text-white"
-                  : "text-blue-200 group-hover:text-white shrink-0"
-              }
+              strokeWidth={activeTab === "statistik" ? 3 : 2}
+              className={collapsed ? "" : "shrink-0"}
             />
-            {!collapsed && <span>Statistik & Kategori</span>}
+            {!collapsed && <span>{t("sidebar.stats_category")}</span>}
           </button>
 
-          {/* --- AKSI CEPAT --- */}
-          {!collapsed ? (
-            <p className="px-3 text-[10px] font-black text-blue-200 dark:text-slate-400 uppercase tracking-[0.2em] mb-3 mt-8 opacity-80">
-              Aksi Cepat
-            </p>
-          ) : (
-            <div className="h-[1px] w-8 bg-white/20 mx-auto mb-3 mt-8"></div>
-          )}
+          <p
+            className={`text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mt-8 mb-3 px-3
+             ${collapsed ? "text-center hidden lg:block text-[8px]" : ""}`}
+          >
+            {t("sidebar.quick_action")}
+          </p>
 
           <button
-            onClick={() => {
-              onOpenKemampuan();
-              setIsMobileMenuOpen(false);
-            }}
-            title="Cek Kemampuan Beli (AI)"
-            className={`w-full flex items-center rounded-xl text-sm font-bold text-white hover:bg-white/10 transition-all group border border-transparent hover:border-white/10
-              ${collapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5"}
+            onClick={onOpenKemampuan}
+            className={`w-full flex items-center rounded-xl text-sm font-bold transition-all relative group
+              ${collapsed ? "justify-center p-3.5 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-purple-500/30" : "gap-3 px-4 py-3.5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border border-indigo-500/20 hover:border-indigo-400/40 text-blue-50"}
             `}
           >
-            <div className="bg-indigo-400/20 text-indigo-300 p-2 rounded-lg group-hover:bg-indigo-400/30 transition-colors shrink-0">
-              <Bot size={16} strokeWidth={2.5} />
-            </div>
-            {!collapsed && <span>Cek Kemampuan Beli</span>}
+            <Bot size={20} className="text-purple-300" strokeWidth={2.5} />
+            {!collapsed && <span>{t("sidebar.affordability_check")}</span>}
+            {!collapsed && (
+              <span className="absolute right-3 w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+            )}
           </button>
 
           <button
-            onClick={() => {
-              handleCameraClick();
-              setIsMobileMenuOpen(false);
-            }}
-            title="Scan Struk"
-            className={`w-full flex items-center rounded-xl text-sm font-bold text-white hover:bg-white/10 transition-all group border border-transparent hover:border-white/10
+            onClick={handleCameraClick}
+            className={`w-full flex items-center rounded-xl text-sm font-bold transition-all group
               ${collapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5"}
+              text-white hover:bg-white/10
             `}
           >
-            <div className="bg-purple-400/20 text-purple-300 p-2 rounded-lg group-hover:bg-purple-400/30 transition-colors shrink-0">
+            <div className="p-1.5 bg-blue-400/20 rounded-lg text-blue-200 group-hover:bg-blue-400/30 transition-colors shrink-0">
               <Camera size={16} strokeWidth={2.5} />
             </div>
-            {!collapsed && <span>Scan Struk</span>}
+            {!collapsed && <span>{t("sidebar.scan_receipt")}</span>}
           </button>
 
           <button
             onClick={handleVoiceRecord}
-            title="Catat via Suara"
             className={`w-full flex items-center rounded-xl text-sm font-bold transition-all group border
               ${collapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5"}
               ${isListening ? "bg-red-500/20 border-red-500/50 text-red-200 animate-pulse" : "border-transparent text-white hover:bg-white/10 hover:border-white/10"}
@@ -260,7 +247,7 @@ const Sidebar = ({
               <Mic size={16} strokeWidth={2.5} />
             </div>
             {!collapsed && (
-              <span>{isListening ? "Mendengarkan..." : "Catat via Suara"}</span>
+              <span>{isListening ? t("sidebar.listening") : t("sidebar.voice_note")}</span>
             )}
           </button>
         </nav>
@@ -271,13 +258,12 @@ const Sidebar = ({
         >
           <button
             onClick={handleLogout}
-            title="Keluar Aplikasi"
             className={`flex items-center justify-center gap-2 rounded-xl text-sm font-bold text-blue-100 hover:bg-red-500/80 hover:text-white hover:border-red-500/30 border border-transparent transition-all duration-300
               ${collapsed ? "p-3.5 w-auto" : "w-full px-4 py-4"}
             `}
           >
             <LogOut size={18} strokeWidth={2.5} className="shrink-0" />
-            {!collapsed && <span>Keluar Aplikasi</span>}
+            {!collapsed && <span>{t("sidebar.logout")}</span>}
           </button>
         </div>
       </aside>

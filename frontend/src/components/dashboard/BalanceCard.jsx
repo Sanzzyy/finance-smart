@@ -8,9 +8,11 @@ import {
   Moon,
   Clock,
 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
   const saldo = totalPemasukan - totalPengeluaran;
+  const { t } = useLanguage();
 
   // --- LOGIKA WAKTU DINAMIS (Tambahkan ini) ---
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -75,9 +77,10 @@ const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></span>
-                <p className="text-blue-100 text-sm lg:text-base font-semibold tracking-wide uppercase">
-                  Total Saldo Aktif
-                </p>
+                <h3 className="text-blue-100 font-semibold mb-1 lg:mb-2 text-sm lg:text-base flex items-center gap-2 drop-shadow-sm truncate">
+                  <Wallet size={18} className="opacity-80" strokeWidth={2.5} />
+                  {t("balance.total_balance")}
+                </h3>
               </div>
               <h2 className="text-4xl px-2 sm:text-5xl lg:text-[5.5rem] font-black tracking-tighter drop-shadow-md truncate">
                 Rp {saldo.toLocaleString("id-ID")}
@@ -118,7 +121,7 @@ const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
               </div>
               <div className="min-w-0">
                 <p className="text-blue-100 text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-0.5 opacity-80 truncate">
-                  Pemasukan
+                  {t("balance.income")}
                 </p>
                 <p className="font-bold text-sm sm:text-lg lg:text-2xl text-white truncate drop-shadow-sm">
                   Rp {totalPemasukan.toLocaleString("id-ID")}
@@ -136,7 +139,7 @@ const BalanceCard = ({ totalPemasukan, totalPengeluaran }) => {
               </div>
               <div className="min-w-0">
                 <p className="text-blue-100 text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-0.5 opacity-80 truncate">
-                  Pengeluaran
+                  {t("balance.expense")}
                 </p>
                 <p className="font-bold text-sm sm:text-lg lg:text-2xl text-white truncate drop-shadow-sm">
                   Rp {totalPengeluaran.toLocaleString("id-ID")}

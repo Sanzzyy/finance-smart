@@ -57,11 +57,21 @@ export const PemasukanModal = ({ show, onClose, form, setForm, onSubmit }) => {
               onChange={(e) => setForm({ ...form, kategori: e.target.value })}
               className="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all font-medium text-slate-700 dark:text-white cursor-pointer appearance-none"
             >
-              <option value="Gaji" className="dark:bg-slate-800">Gaji 💰</option>
-              <option value="Bonus" className="dark:bg-slate-800">Bonus 🎁</option>
-              <option value="Jajan" className="dark:bg-slate-800">Jajan ☕</option>
-              <option value="Darurat" className="dark:bg-slate-800">Darurat 🛡️</option>
-              <option value="Lainnya" className="dark:bg-slate-800">Lainnya ❓</option>
+              <option value="Gaji" className="dark:bg-slate-800">
+                Gaji 💰
+              </option>
+              <option value="Bonus" className="dark:bg-slate-800">
+                Bonus 🎁
+              </option>
+              <option value="Jajan" className="dark:bg-slate-800">
+                Jajan ☕
+              </option>
+              <option value="Darurat" className="dark:bg-slate-800">
+                Darurat 🛡️
+              </option>
+              <option value="Lainnya" className="dark:bg-slate-800">
+                Lainnya ❓
+              </option>
             </select>
           </div>
         </div>
@@ -145,12 +155,24 @@ export const PengeluaranModal = ({
               onChange={(e) => setForm({ ...form, kategori: e.target.value })}
               className="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all font-medium text-slate-700 dark:text-white cursor-pointer appearance-none"
             >
-              <option value="Makan" className="dark:bg-slate-800">Makan 🍽️</option>
-              <option value="Transportasi" className="dark:bg-slate-800">Transportasi 🚗</option>
-              <option value="Belanja" className="dark:bg-slate-800">Belanja 🛍️</option>
-              <option value="Tagihan" className="dark:bg-slate-800">Tagihan 📄</option>
-              <option value="Jajan" className="dark:bg-slate-800">Jajan ☕</option>
-              <option value="Lainnya" className="dark:bg-slate-800">Lainnya ❓</option>
+              <option value="Makan" className="dark:bg-slate-800">
+                Makan 🍽️
+              </option>
+              <option value="Transportasi" className="dark:bg-slate-800">
+                Transportasi 🚗
+              </option>
+              <option value="Belanja" className="dark:bg-slate-800">
+                Belanja 🛍️
+              </option>
+              <option value="Tagihan" className="dark:bg-slate-800">
+                Tagihan 📄
+              </option>
+              <option value="Jajan" className="dark:bg-slate-800">
+                Jajan ☕
+              </option>
+              <option value="Lainnya" className="dark:bg-slate-800">
+                Lainnya ❓
+              </option>
             </select>
           </div>
         </div>
@@ -178,7 +200,7 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
   if (!show) return null;
 
   const isPemasukan = form.tipe === "pemasukan";
-  
+
   const kategoriPemasukan = [
     { val: "Gaji", label: "Gaji 💰" },
     { val: "Bonus", label: "Bonus 🎁" },
@@ -186,7 +208,7 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
     { val: "Darurat", label: "Darurat 🛡️" },
     { val: "Lainnya", label: "Lainnya ❓" },
   ];
-  
+
   const kategoriPengeluaran = [
     { val: "Makan", label: "Makan 🍽️" },
     { val: "Transportasi", label: "Transportasi 🚗" },
@@ -207,7 +229,7 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
         <h2 className="text-slate-800 dark:text-white text-2xl font-black mb-6">
           Ubah Transaksi
         </h2>
-        
+
         <div className="space-y-5 mb-8">
           <div>
             <label className="text-slate-500 dark:text-slate-400 text-[10px] font-black mb-2 block uppercase tracking-widest">
@@ -218,7 +240,7 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
               type="text"
               value={form.judul}
               onChange={(e) => setForm({ ...form, judul: e.target.value })}
-              className={`w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 transition-all font-medium text-slate-700 dark:text-white ${isPemasukan ? 'focus:ring-emerald-500/30 focus:border-emerald-500' : 'focus:ring-rose-500/30 focus:border-rose-500'}`}
+              className={`w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 transition-all font-medium text-slate-700 dark:text-white ${isPemasukan ? "focus:ring-emerald-500/30 focus:border-emerald-500" : "focus:ring-rose-500/30 focus:border-rose-500"}`}
               placeholder="Keterangan transaksi"
             />
           </div>
@@ -238,7 +260,7 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
                   nominal: val ? parseInt(val).toLocaleString("id-ID") : "",
                 });
               }}
-              className={`w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 transition-all font-black text-xl ${isPemasukan ? 'text-emerald-600 dark:text-emerald-400 focus:ring-emerald-500/30 focus:border-emerald-500' : 'text-rose-600 dark:text-rose-400 focus:ring-rose-500/30 focus:border-rose-500'}`}
+              className={`w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 transition-all font-black text-xl ${isPemasukan ? "text-emerald-600 dark:text-emerald-400 focus:ring-emerald-500/30 focus:border-emerald-500" : "text-rose-600 dark:text-rose-400 focus:ring-rose-500/30 focus:border-rose-500"}`}
               placeholder="0"
             />
           </div>
@@ -250,10 +272,16 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
             <select
               value={form.kategori}
               onChange={(e) => setForm({ ...form, kategori: e.target.value })}
-              className={`w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 transition-all font-medium text-slate-700 dark:text-white cursor-pointer appearance-none ${isPemasukan ? 'focus:ring-emerald-500/30 focus:border-emerald-500' : 'focus:ring-rose-500/30 focus:border-rose-500'}`}
+              className={`w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-4 focus:ring-2 transition-all font-medium text-slate-700 dark:text-white cursor-pointer appearance-none ${isPemasukan ? "focus:ring-emerald-500/30 focus:border-emerald-500" : "focus:ring-rose-500/30 focus:border-rose-500"}`}
             >
-              {kategoriOptions.map(opt => (
-                <option key={opt.val} value={opt.val} className="dark:bg-slate-800">{opt.label}</option>
+              {kategoriOptions.map((opt) => (
+                <option
+                  key={opt.val}
+                  value={opt.val}
+                  className="dark:bg-slate-800"
+                >
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -269,7 +297,7 @@ export const EditModal = ({ show, onClose, form, setForm, onSubmit }) => {
           </button>
           <button
             type="submit"
-            className={`flex-[2] text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${isPemasukan ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'}`}
+            className={`flex-[2] text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all ${isPemasukan ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" : "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"}`}
           >
             Simpan Perubahan
           </button>
@@ -354,16 +382,30 @@ export const ScanResultModal = ({ data, onClose, onSave }) => {
   );
 };
 
-export const KemampuanBeliModal = ({ show, onClose, userId, saldo, rataPengeluaran }) => {
+export const KemampuanBeliModal = ({
+  show,
+  onClose,
+  userId,
+  saldo,
+  rataPengeluaran,
+}) => {
   const [text, setText] = React.useState("");
   const [isListening, setIsListening] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [result, setResult] = React.useState(null); // { status: "bisa" | "tidak", pesan: "..." }
 
+  React.useEffect(() => {
+    if (result && result.status?.toLowerCase() === "tidak") {
+      const audio = new Audio("/audio/dame_yo.mp3");
+      audio.play().catch((e) => console.log("Audio error:", e));
+    }
+  }, [result]);
+
   if (!show) return null;
 
   const handleVoiceRecord = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Browser kamu belum mendukung fitur rekam suara.");
       return;
@@ -398,7 +440,10 @@ export const KemampuanBeliModal = ({ show, onClose, userId, saldo, rataPengeluar
       setResult(res.data.data);
     } catch (error) {
       console.error(error);
-      setResult({ status: "tidak", pesan: "Maaf, Asisten AI sedang sibuk atau ada masalah jaringan." });
+      setResult({
+        status: "tidak",
+        pesan: "Maaf, Asisten AI sedang sibuk atau ada masalah jaringan.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -419,20 +464,32 @@ export const KemampuanBeliModal = ({ show, onClose, userId, saldo, rataPengeluar
             <Bot size={28} className="text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Cek Kemampuan Beli</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">AI Financial Planner</p>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+              Cek Kemampuan Beli
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+              AI Financial Planner
+            </p>
           </div>
         </div>
 
         {/* INFO SALDO CURRENT */}
         <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 mb-6 gap-2">
           <div className="flex flex-col w-1/2">
-            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Saldo Saat Ini</span>
-            <span className="font-bold text-slate-700 dark:text-slate-200 truncate">Rp {saldo?.toLocaleString("id-ID")}</span>
+            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">
+              Saldo Saat Ini
+            </span>
+            <span className="font-bold text-slate-700 dark:text-slate-200 truncate">
+              Rp {saldo?.toLocaleString("id-ID")}
+            </span>
           </div>
           <div className="flex flex-col text-right w-1/2">
-            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Rata Pengeluaran</span>
-            <span className="font-bold text-slate-700 dark:text-slate-200 truncate">Rp {rataPengeluaran?.toLocaleString("id-ID")}</span>
+            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">
+              Rata Pengeluaran
+            </span>
+            <span className="font-bold text-slate-700 dark:text-slate-200 truncate">
+              Rp {rataPengeluaran?.toLocaleString("id-ID")}
+            </span>
           </div>
         </div>
 
@@ -458,16 +515,24 @@ export const KemampuanBeliModal = ({ show, onClose, userId, saldo, rataPengeluar
               disabled={isLoading || !text.trim()}
               className="p-2.5 bg-indigo-500 text-white rounded-xl shadow-md hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Send size={18} />
+              )}
             </button>
           </div>
         </form>
 
         {/* HASIL / JAWABAN AI */}
         {result && (
-          <div className={`p-4 rounded-2xl border animate-in slide-in-from-bottom-4 duration-300 ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30"}`}>
+          <div
+            className={`p-4 rounded-2xl border animate-in slide-in-from-bottom-4 duration-300 ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30"}`}
+          >
             <div className="flex items-center gap-3 mb-2">
-              <span className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"}`}>
+              <span
+                className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider ${result.status?.toLowerCase() === "bisa" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"}`}
+              >
                 {result.status?.toUpperCase() || "INFO"}
               </span>
             </div>
